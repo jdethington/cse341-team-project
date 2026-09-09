@@ -2,4 +2,4 @@
 
 ## Pull Request Workflow
 
-- TBD
+- Make sure to `git pull` before starting new work
