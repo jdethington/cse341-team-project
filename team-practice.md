@@ -2,6 +2,5 @@
 
 ## Pull Request Workflow
 
-- TBD
-
 - making a small change - PC
+- Make sure to `git pull` before starting new work
