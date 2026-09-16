@@ -1,6 +1,8 @@
 //src/models/schemas/trains.js.
 import mongoose from "mongoose";
 
+await mongoose.connect(process.env.MONGODB_URI);
+
 const trainSchema = new mongoose.Schema(
   {
     id: {
@@ -62,7 +64,7 @@ const trainSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 const Train = mongoose.model("Train", trainSchema);
