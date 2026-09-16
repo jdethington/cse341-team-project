@@ -1,5 +1,5 @@
 //src/models/trains.js. 
-import Train from "../train.js";
+import Train from "./schemas/train.js";
 
 export async function getTrainById(id) {
   return Train.findOne({ id }).lean();
