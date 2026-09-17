@@ -1,8 +1,6 @@
 //src/models/schemas/trains.js.
 import mongoose from "mongoose";
 
-await mongoose.connect(process.env.MONGODB_URI);
-
 const trainSchema = new mongoose.Schema(
   {
     id: {
