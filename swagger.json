@@ -1,0 +1,199 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Kizuna Rail API",
+    "version": "1.0.0",
+    "description": "API for the Kizuna Rail application"
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Current server"
+    }
+  ],
+  "paths": {
+    "/api/trains": {
+      "get": {
+        "tags": [
+          "Trains"
+        ],
+        "summary": "Get all trains",
+        "description": "Returns a list of all trains in the system.",
+        "responses": {
+          "200": {
+            "description": "Successful response with an array of trains",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "trains": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Train"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Failed to fetch trains"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/trains/{id}": {
+      "get": {
+        "tags": [
+          "Trains"
+        ],
+        "summary": "Get a train by ID",
+        "description": "Returns a single train matching the given ID.",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The unique train ID",
+            "example": "series-e353"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful response with the train object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Train"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Train not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Train not found"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Failed to fetch train"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Train": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique train identifier",
+            "example": "series-e353"
+          },
+          "name": {
+            "type": "string",
+            "example": "Series E353 Limited Express"
+          },
+          "operator": {
+            "type": "string",
+            "example": "JR East"
+          },
+          "imageUrl": {
+            "type": "string",
+            "format": "uri",
+            "nullable": true
+          },
+          "imageAlt": {
+            "type": "string",
+            "nullable": true
+          },
+          "type": {
+            "type": "string",
+            "example": "Limited Express"
+          },
+          "maxSpeedKmh": {
+            "type": "number",
+            "example": 130
+          },
+          "capacity": {
+            "type": "number",
+            "example": 360
+          },
+          "powerSource": {
+            "type": "string",
+            "example": "Electric"
+          },
+          "bestFor": {
+            "type": "string",
+            "nullable": true
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "operator",
+          "type",
+          "maxSpeedKmh",
+          "capacity",
+          "powerSource"
+        ]
+      }
+    }
+  },
+  "tags": []
+}
