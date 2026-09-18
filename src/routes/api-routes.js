@@ -58,30 +58,30 @@ const router = Router();
  *               properties:
  *                 error:
  *                   type: string
- *   components:
- *     schemas:
- *       TicketClass:
- *         type: object
- *         properties:
- *           class:
+ * components:
+ *   schemas:
+ *     TicketClass:
+ *       type: object
+ *       properties:
+ *         class:
+ *           type: string
+ *           example: premium
+ *         name:
+ *           type: string
+ *           example: Premium Class
+ *         pricePerKm:
+ *           type: number
+ *           example: 150
+ *         amenities:
+ *           type: array
+ *           items:
  *             type: string
- *             example: premium
- *           name:
+ *         description:
+ *           type: string
+ *         availableDays:
+ *           type: array
+ *           items:
  *             type: string
- *             example: Premium Class
- *           pricePerKm:
- *             type: number
- *             example: 150
- *           amenities:
- *             type: array
- *             items:
- *               type: string
- *           description:
- *             type: string
- *           availableDays:
- *             type: array
- *             items:
- *               type: string
  */
 router.get("/api/ticket-classes", (req, res, next) => {
   if (req.query.day !== undefined) {

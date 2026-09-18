@@ -89,37 +89,45 @@
             }
           }
         }
-      },
-      "components": {
-        "schemas": {
-          "TicketClass": {
-            "type": "object",
-            "properties": {
-              "class": {
-                "type": "string",
-                "example": "premium"
-              },
-              "name": {
-                "type": "string",
-                "example": "Premium Class"
-              },
-              "pricePerKm": {
-                "type": "number",
-                "example": 150
-              },
-              "amenities": {
-                "type": "array",
-                "items": {
-                  "type": "string"
+      }
+    },
+    "/api/bookings": {
+      "get": {
+        "summary": "List bookings",
+        "description": "Returns all bookings.",
+        "tags": [
+          "Bookings"
+        ],
+        "responses": {
+          "200": {
+            "description": "Bookings retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "bookings": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Booking"
+                      }
+                    }
+                  }
                 }
-              },
-              "description": {
-                "type": "string"
-              },
-              "availableDays": {
-                "type": "array",
-                "items": {
-                  "type": "string"
+              }
+            }
+          },
+          "500": {
+            "description": "Unable to retrieve bookings",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
                 }
               }
             }
@@ -128,6 +136,97 @@
       }
     }
   },
-  "components": {},
+  "components": {
+    "schemas": {
+      "TicketClass": {
+        "type": "object",
+        "properties": {
+          "class": {
+            "type": "string",
+            "example": "premium"
+          },
+          "name": {
+            "type": "string",
+            "example": "Premium Class"
+          },
+          "pricePerKm": {
+            "type": "number",
+            "example": 150
+          },
+          "amenities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "description": {
+            "type": "string"
+          },
+          "availableDays": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Booking": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "JRIXB6XMB6"
+          },
+          "createdAt": {
+            "type": "string",
+            "example": "2026-09-17T19:47:23.048Z"
+          },
+          "scheduleId": {
+            "type": "string",
+            "example": "1"
+          },
+          "tripId": {
+            "type": "string",
+            "example": "alpine-panorama"
+          },
+          "ticketClass": {
+            "type": "string",
+            "example": "premium"
+          },
+          "selectedDay": {
+            "type": "string",
+            "example": "monday"
+          },
+          "passengers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Passenger"
+            }
+          }
+        }
+      },
+      "Passenger": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "type": "string",
+            "example": "William"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Clark"
+          },
+          "email": {
+            "type": "string",
+            "example": "william.clark16@example.com"
+          },
+          "phone": {
+            "type": "string",
+            "example": "+1 555-0159-8714"
+          }
+        }
+      }
+    }
+  },
   "tags": []
 }
