@@ -1,4 +1,4 @@
-import Booking from "./schemas/bookings";
+import Booking from "./schemas/bookings.js";
 
 const createBooking = async (bookingData) => {
   const booking = await Booking.create(bookingData);

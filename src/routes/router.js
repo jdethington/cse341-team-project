@@ -1,10 +1,7 @@
 import apiRoutes from "./api-routes.js";
 import railTripsRouter from "./trips.js";
-import {
-  trainsPage,
-  getTrainById,
-  getAllTrains,
-} from "./trains.js";
+import { trainsPage, getTrainById, getAllTrains } from "./trains.js";
+import { getAllBookings } from "./bookings.js";
 import { Router } from "express";
 import { homePage, aboutPage, testErrorPage } from "./index.js";
 
@@ -22,6 +19,8 @@ router.get("/trains", trainsPage);
 // Trains API
 router.get("/api/trains", getAllTrains);
 router.get("/api/trains/:id", getTrainById);
+// Bookings API
+router.get("/api/bookings", getAllBookings);
 
 // JSON API endpoints
 router.use("/", apiRoutes);

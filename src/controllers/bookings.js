@@ -1,4 +1,4 @@
-import { getAllBookings as findAllBookings } from "../models/bookings";
+import { getAllBookings as findAllBookings } from "../models/bookings.js";
 
 export async function getAllBookings(req, res) {
   try {
