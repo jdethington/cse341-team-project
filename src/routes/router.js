@@ -1,3 +1,4 @@
+import apiRoutes from "./api-routes.js";
 import railTripsRouter from "./trips.js";
 import {
   trainsPage,
@@ -21,6 +22,9 @@ router.get("/trains", trainsPage);
 // Trains API
 router.get("/api/trains", getAllTrains);
 router.get("/api/trains/:id", getTrainById);
+
+// JSON API endpoints
+router.use("/", apiRoutes);
 
 // Rail trips
 router.use("/trips", railTripsRouter);

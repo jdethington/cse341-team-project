@@ -386,6 +386,45 @@
         console.log(`✓ Filled ${cards.length} passenger form(s)`);
     };
 
+    // When a day is selected, ticket classes that are not available on that day are grayed out
+    const ticketCards = Array.from(document.querySelectorAll('.ticket-card'));
+
+    const applyDayAvailability = async (day) => {
+        if (!day) {
+            return;
+        }
+
+        let availableClasses = null;
+        try {
+            const response = await fetch(`/api/ticket-classes?day=${encodeURIComponent(day)}`);
+            if (!response.ok) {
+                return;
+            }
+            const payload = await response.json();
+            availableClasses = (payload.ticketClasses || []).map((ticketClass) => ticketClass.class);
+        } catch (error) {
+            return;
+        }
+
+        ticketCards.forEach((card) => {
+            const radio = card.querySelector('input[type="radio"]');
+            const available = availableClasses.includes(radio.value);
+            card.classList.toggle('unavailable', !available);
+            radio.disabled = !available;
+        });
+
+        const selected = document.querySelector('input[name="ticketClass"]:checked');
+        if (selected && selected.disabled) {
+            const fallback = Array.from(document.querySelectorAll('input[name="ticketClass"]')).find((input) => !input.disabled);
+            if (fallback) {
+                fallback.checked = true;
+                selectedTicketName.textContent = fallback.dataset.name;
+                ticketPrice = parseInt(fallback.dataset.price, 10);
+                updateSummary();
+            }
+        }
+    };
+
     // Event Listeners
     selectedDayLabels.forEach((label) => {
         label.addEventListener('click', (e) => {
@@ -400,8 +439,11 @@
             });
 
             label.classList.add('selected');
-            label.querySelector('input').checked = true;
-            label.querySelector('input').setAttribute('checked', true);
+            const input = label.querySelector('input');
+            input.checked = true;
+            input.setAttribute('checked', true);
+
+            applyDayAvailability(input.value);
         });
     });
 
@@ -443,14 +485,19 @@
         autoFillForm();
     });
 
-    // Initialize ticket based on default selection
+    // Initialize ticket based on the default selection
     const selectedRadio = document.querySelector('input[name="ticketClass"]:checked');
     if (selectedRadio) {
-        const ticketName = selectedRadio.dataset.name;
-        selectedTicketName.textContent = ticketName;
-        ticketPrice = parseInt(selectedRadio.dataset.price);
+        selectedTicketName.textContent = selectedRadio.dataset.name;
+        ticketPrice = parseInt(selectedRadio.dataset.price, 10);
     }
     updateSummary();
+
+    // Apply ticket availability for the initially selected day
+    const defaultDay = document.querySelector('input[name="selectedDay"]:checked');
+    if (defaultDay) {
+        applyDayAvailability(defaultDay.value);
+    }
 </script>
 
 <%- include('../partials/footer') %>
