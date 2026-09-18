@@ -5,18 +5,22 @@ const passengerSchema = new mongoose.Schema(
     firstName: {
       type: String,
       required: true,
+      trim: true,
     },
     lastName: {
       type: String,
       required: true,
+      trim: true,
     },
     email: {
       type: String,
       required: true,
+      trim: true,
     },
-    phoneNumber: {
+    phone: {
       type: String,
       required: true,
+      trim: true,
     },
   },
   { _id: false }, // Prevents Mongoose from creating an _id field for each passenger
@@ -34,7 +38,7 @@ const bookingSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    schedulerId: {
+    scheduleId: {
       type: String,
       required: true,
       trim: true,
@@ -42,14 +46,17 @@ const bookingSchema = new mongoose.Schema(
     tripId: {
       type: String,
       required: true,
+      trim: true,
     },
     ticketClass: {
       type: String,
       required: true,
+      trim: true,
     },
     selectedDay: {
       type: String,
       required: true,
+      trim: true,
     },
     passengers: {
       type: [passengerSchema],
