@@ -8,6 +8,9 @@ import {
 import { Router } from "express";
 import { homePage, aboutPage, testErrorPage } from "./index.js";
 
+
+import { getAllTrips, getTripById } from '../controllers/trips.js';
+
 const router = Router();
 
 // Home page
@@ -25,6 +28,11 @@ router.get("/api/trains/:id", getTrainById);
 
 // JSON API endpoints
 router.use("/", apiRoutes);
+
+// trips API routes (returning JSON data)
+router.get('/api/trips', getAllTrips);
+router.get('/api/trips/:id', getTripById);
+
 
 // Rail trips
 router.use("/trips", railTripsRouter);

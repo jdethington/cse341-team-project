@@ -1,6 +1,10 @@
-import app from "./app.js";
-import { connectToDb } from "./src/db/connect.js";
-import mongoose from "mongoose";
+// to bypass DNS resolution issues on Windows, set the DNS servers to Cloudflare and Google DNS
+import dns from 'node:dns';
+dns.setServers(['1.1.1.1', '8.8.8.8']);
+
+import app from './app.js';
+import { connectToDb } from './src/db/connect.js';
+import mongoose from 'mongoose';
 
 const NODE_ENV = process.env.NODE_ENV?.toLowerCase() || "production";
 const PORT = process.env.PORT || 3000;
