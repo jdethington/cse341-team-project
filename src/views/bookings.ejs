@@ -1,0 +1,67 @@
+<%- include('./partials/header') %>
+
+    <section class="bookings-hero">
+        <h1>Bookings Administration</h1>
+        <p>
+            View bookings currently stored in the Kizuna Rail system.
+        </p>
+    </section>
+
+    <section class="bookings-catalog">
+        <div class="bookings-state" id="bookings-loading">
+            Loading bookings...
+        </div>
+
+        <div class="bookings-state bookings-error" id="bookings-error" hidden></div>
+
+        <div class="bookings-state" id="bookings-empty" hidden>
+            No bookings were found.
+        </div>
+
+        <div class="bookings-grid" id="bookings-list"></div>
+
+        <template id="booking-card-template">
+            <article class="booking-card">
+                <header class="booking-card-header">
+                    <h2>
+                        Booking
+                        <span data-field="id"></span>
+                    </h2>
+                </header>
+
+                <dl class="booking-details">
+                    <div class="booking-detail">
+                        <dt>Created</dt>
+                        <dd data-field="created-at"></dd>
+                    </div>
+
+                    <div class="booking-detail">
+                        <dt>Schedule ID</dt>
+                        <dd data-field="schedule-id"></dd>
+                    </div>
+
+                    <div class="booking-detail">
+                        <dt>Trip ID</dt>
+                        <dd data-field="trip-id"></dd>
+                    </div>
+
+                    <div class="booking-detail">
+                        <dt>Ticket Class</dt>
+                        <dd data-field="ticket-class"></dd>
+                    </div>
+
+                    <div class="booking-detail">
+                        <dt>Selected Day</dt>
+                        <dd data-field="selected-day"></dd>
+                    </div>
+                </dl>
+
+                <section class="booking-passengers">
+                    <h3>Passengers</h3>
+                    <ul data-field="passengers"></ul>
+                </section>
+            </article>
+        </template>
+    </section>
+
+    <%- include('./partials/footer') %>

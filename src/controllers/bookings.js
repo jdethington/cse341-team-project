@@ -76,3 +76,9 @@ export async function bookingPage(req, res) {
     });
   }
 }
+
+export function bookingsAdminPage(req, res) {
+  return res.render("bookings", {
+    title: "Bookings Administration",
+  });
+}
