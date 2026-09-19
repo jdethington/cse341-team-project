@@ -1,43 +1,88 @@
-import express from 'express';
-import { getAllTrips, getTripById } from '../controllers/trips.js';
+import { Router } from "express";
+import { getAllTicketClasses, getTicketClassesForDay } from "../controllers/ticket-classes.js";
 
-const router = express.Router();
-
-/**
- * @swagger
- * /api/trips:
- *   get:
- *     summary: Retrieve a list of all trips
- *     tags: [Trips]
- *     responses:
- *       200:
- *         description: A list of trips
- *       500:
- *         description: Server error
- */
-router.get('/trips', getAllTrips);
+const router = Router();
 
 /**
- * @swagger
- * /api/trips/{id}:
+ * @openapi
+ * /api/ticket-classes:
  *   get:
- *     summary: Get a single trip by ID
- *     tags: [Trips]
+ *     summary: List ticket classes
+ *     description: >
+ *       Returns every ticket class. Optionally filter to the classes
+ *       available on a specific day with the `day` query parameter.
+ *     tags:
+ *       - Ticket Classes
  *     parameters:
- *       - in: path
- *         name: id
- *         required: true
+ *       - in: query
+ *         name: day
+ *         required: false
+ *         description: >
+ *           Day of week to filter by, such as `monday`. Invalid values
+ *           return 400.
  *         schema:
  *           type: string
- *         description: The trip ID
+ *           enum: [monday, tuesday, wednesday, thursday, friday, saturday, sunday]
  *     responses:
  *       200:
- *         description: Trip data found
- *       404:
- *         description: Trip not found
+ *         description: Ticket classes (all, or filtered by day)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 ticketClasses:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/TicketClass'
+ *       400:
+ *         description: The `day` query parameter was invalid
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  *       500:
- *         description: Server error
+ *         description: Unable to retrieve ticket classes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ * components:
+ *   schemas:
+ *     TicketClass:
+ *       type: object
+ *       properties:
+ *         class:
+ *           type: string
+ *           example: premium
+ *         name:
+ *           type: string
+ *           example: Premium Class
+ *         pricePerKm:
+ *           type: number
+ *           example: 150
+ *         amenities:
+ *           type: array
+ *           items:
+ *             type: string
+ *         description:
+ *           type: string
+ *         availableDays:
+ *           type: array
+ *           items:
+ *             type: string
  */
-router.get('/trips/:id', getTripById);
+router.get("/api/ticket-classes", (req, res, next) => {
+  if (req.query.day !== undefined) {
+    return getTicketClassesForDay(req, res, next);
+  }
+  return getAllTicketClasses(req, res, next);
+});
 
 export default router;

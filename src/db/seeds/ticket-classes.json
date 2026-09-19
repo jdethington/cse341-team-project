@@ -8,7 +8,16 @@
             "Large windows",
             "Complimentary tea"
         ],
-        "description": "Enjoy scenic views from comfortable seats with complimentary refreshments"
+        "description": "Enjoy scenic views from comfortable seats with complimentary refreshments",
+        "availableDays": [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday"
+        ]
     },
     {
         "class": "premium",
@@ -20,7 +29,14 @@
             "Reserved seating",
             "Souvenir photo"
         ],
-        "description": "Enhanced experience with meal service and panoramic viewing windows"
+        "description": "Enhanced experience with meal service and panoramic viewing windows",
+        "availableDays": [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday"
+        ]
     },
     {
         "class": "first",
@@ -33,6 +49,10 @@
             "Priority boarding",
             "Souvenir gift"
         ],
-        "description": "Ultimate luxury with private seating and full dining service"
+        "description": "Ultimate luxury with private seating and full dining service",
+        "availableDays": [
+            "saturday",
+            "sunday"
+        ]
     }
 ]
