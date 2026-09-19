@@ -1,3 +1,9 @@
+
+// to bypass DNS resolution issues on Windows, set the DNS servers to Cloudflare and Google DNS
+import dns from 'node:dns';
+dns.setServers(['1.1.1.1', '8.8.8.8']); 
+
+
 import app from './app.js';
 import { connectToDb } from './src/db/connect.js';
 

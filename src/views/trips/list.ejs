@@ -1,79 +1,136 @@
 <%- include('../partials/header') %>
-<h1><%- title %></h1>
+<h1><%= title %></h1>
 
 <div id="filters">
     Search by Region:
     <select id="region-filter">
         <option value="all">All Regions</option>
-        <% regions.forEach((region) => { %>
-            <option value="<%= region %>" <%= query.region === region ? 'selected' : '' %>><%= region.charAt(0).toUpperCase() + region.slice(1) %></option>
-        <% }); %>
+        <option value="central">Central</option>
+        <option value="hokkaido">Hokkaido</option>
+        <option value="kansai">Kansai</option>
+        <option value="northern">Northern</option>
     </select>
 
     Search by Season:
     <select id="season-filter">
         <option value="all">Any Season</option>
-        <% seasons.forEach((season) => { %>
-            <option value="<%= season %>" <%= query.season === season ? 'selected' : '' %>><%= season.charAt(0).toUpperCase() + season.slice(1) %></option>
-        <% }); %>
+        <option value="autumn">Autumn</option>
+        <option value="spring">Spring</option>
+        <option value="summer">Summer</option>
+        <option value="winter">Winter</option>
     </select>
 </div>
 
-<div class="routes-grid">
-    <% trips.forEach(trip => { %>
-        <div class="route-card <%= trip.region %>">
-            <div class="route-header">
-                <h2 class="route-name"><%= trip.name %></h2>
-                <span class="route-region"><%= trip.region %></span>
-            </div>
-
-            <div class="station-info">
-                <div class="station">
-                    <div class="station-type">From:</div>
-                    <div class="station-name"><%= trip.startStation %></div>
-                </div>
-                <div class="route-arrow">&#8594;</div>
-                <div class="station">
-                    <div class="station-type">To:</div>
-                    <div class="station-name"><%= trip.endStation %></div>
-                </div>
-            </div>
-
-            <div class="route-details">
-                <div class="detail-item">
-                    <span class="detail-icon">&#128337;</span>
-                    <span><span class="detail-label">Duration:</span> <%= trip.duration %></span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-icon">&#128205;</span>
-                    <span><span class="detail-label">Distance:</span> <%= trip.distance %>km</span>
-                </div>
-                <div class="detail-item">
-                    <span class="season-badge season-<%= trip.bestSeason %>">
-                        Best in <%= trip.bestSeason %>
-                    </span>
-                </div>
-            </div>
-
-            <div class="route-description">
-                <%= trip.description %>
-            </div>
-
-            <div class="highlights">
-                <div class="highlights-list">
-                    <% trip.highlights.forEach(highlight => { %>
-                        <span class="highlight-tag"><%= highlight %></span>
-                    <% }); %>
-                </div>
-            </div>
-                
-            <div class="route-actions">
-                <a href="/trips/<%= trip.id %>" class="view-details-btn">
-                    View Details &amp; Book &#8594;
-                </a>
-            </div>
-        </div>
-    <% }); %>
+<!-- This grid starts empty and gets populated dynamically by client-side JavaScript -->
+<div class="routes-grid" id="routes-grid">
+    <p>Loading trips...</p>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async () => {
+        const grid = document.getElementById('routes-grid');
+        const regionFilter = document.getElementById('region-filter');
+        const seasonFilter = document.getElementById('season-filter');
+
+        let allTrips = [];
+
+        // Fetch trips from our new API endpoint
+        async function fetchTrips() {
+            try {
+                const response = await fetch('/api/trips');
+                if (!response.ok) throw new Error('Failed to fetch trips');
+                allTrips = await response.json();
+                renderTrips(allTrips);
+            } catch (error) {
+                console.error(error);
+                grid.innerHTML = '<p>Error loading trips data.</p>';
+            }
+        }
+
+        // Render trips into HTML cards dynamically
+        function renderTrips(trips) {
+            if (trips.length === 0) {
+                grid.innerHTML = '<p>No trips found.</p>';
+                return;
+            }
+
+            grid.innerHTML = trips.map(trip => `
+                <div class="route-card ${trip.region}">
+                    <div class="route-header">
+                        <h2 class="route-name">${trip.name || trip.title}</h2>
+                        <span class="route-region">${trip.region}</span>
+                    </div>
+
+                    <div class="station-info">
+                        <div class="station">
+                            <div class="station-type">From:</div>
+                            <div class="station-name">${trip.startStation || trip.from}</div>
+                        </div>
+                        <div class="route-arrow">&#8594;</div>
+                        <div class="station">
+                            <div class="station-type">To:</div>
+                            <div class="station-name">${trip.endStation || trip.to}</div>
+                        </div>
+                    </div>
+
+                    <div class="route-details">
+                        <div class="detail-item">
+                            <span class="detail-icon">&#128337;</span>
+                            <span><span class="detail-label">Duration:</span> ${trip.duration}</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-icon">&#128205;</span>
+                            <span><span class="detail-label">Distance:</span> ${trip.distance}km</span>
+                        </div>
+                        <div class="detail-item">
+                            <span class="season-badge season-${trip.bestSeason || trip.season}">
+                                Best in ${trip.bestSeason || trip.season}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="route-description">
+                        ${trip.description}
+                    </div>
+
+                    <div class="highlights">
+                        <div class="highlights-list">
+                            ${(trip.highlights || []).map(h => `<span class="highlight-tag">${h}</span>`).join('')}
+                        </div>
+                    </div>
+                        
+                    <div class="route-actions">
+                        <a href="/trips/${trip.id}" class="view-details-btn">
+                            View Details &amp; Book &#8594;
+                        </a>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Optional filter capability for the dropdowns
+        function filterTrips() {
+            const selectedRegion = regionFilter.value;
+            const selectedSeason = seasonFilter.value;
+
+            const filtered = allTrips.filter(trip => {
+                const regionVal = trip.region ? trip.region.toLowerCase() : '';
+                const seasonVal = (trip.bestSeason || trip.season) ? (trip.bestSeason || trip.season).toLowerCase() : '';
+
+                const matchesRegion = selectedRegion === 'all' || regionVal === selectedRegion;
+                const matchesSeason = selectedSeason === 'all' || seasonVal === selectedSeason;
+                return matchesRegion && matchesSeason;
+            });
+
+            renderTrips(filtered);
+        }
+
+        regionFilter.addEventListener('change', filterTrips);
+        seasonFilter.addEventListener('change', filterTrips);
+
+        // Load data on page load
+        fetchTrips();
+    });
+</script>
 
 <%- include('../partials/footer') %>
