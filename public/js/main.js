@@ -88,8 +88,66 @@ const hookTrainsCatalog = async () => {
     }
 };
 
+
+const hookStationDetails = () => {
+    const buttons = document.querySelectorAll('.station-details-btn');
+    const templateEl = document.getElementById('station-details-template');
+
+    if (!buttons.length || !templateEl) {
+        return;
+    }
+
+    buttons.forEach((button) => {
+        button.addEventListener('click', async () => {
+            const stationId = button.dataset.stationId;
+            const detailsEl = button.nextElementSibling;
+
+            if (!stationId || !detailsEl) {
+                return;
+            }
+
+            if (detailsEl.childElementCount > 0) {
+                detailsEl.hidden = !detailsEl.hidden;
+                button.textContent = detailsEl.hidden ? 'View Station' : 'Hide Station';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/stations/${stationId}`);
+
+                if (!response.ok) {
+                    detailsEl.hidden = false;
+                    detailsEl.textContent = 'Unable to load station details.';
+                    button.textContent = 'Hide Station';
+                    return;
+                }
+
+                const station = await response.json();
+                const clone = templateEl.content.cloneNode(true);
+
+                clone.querySelector('[data-field="name"]').textContent = station.name;
+                clone.querySelector('[data-field="prefecture"]').textContent = station.prefecture;
+                clone.querySelector('[data-field="region"]').textContent = station.region;
+                clone.querySelector('[data-field="facilities"]').textContent =
+                    (station.facilities || []).join(', ');
+                clone.querySelector('[data-field="description"]').textContent = station.description;
+
+                detailsEl.replaceChildren(clone);
+                detailsEl.hidden = false;
+                button.textContent = 'Hide Station';
+            } catch (error) {
+                detailsEl.hidden = false;
+                detailsEl.textContent = 'Unable to load station details.';
+                button.textContent = 'Hide Station';
+            }
+        });
+    });
+};
+
+
 document.addEventListener('DOMContentLoaded', () => {
     hookRegionSorter();
     hookSeasonSorter();
     hookTrainsCatalog();
+    hookStationDetails();
 });

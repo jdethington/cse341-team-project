@@ -313,15 +313,18 @@ article.route-detail {
             .route-stations {
                 grid-area: stations;
 
-                .stations {
-                    display: inline-flex;
+            .stations {
+                    display: flex;
                     flex-direction: row;
-                    align-items: center;
+                    flex-wrap: wrap;
+                    align-items: flex-start;
                     justify-content: space-between;
                     column-gap: var(--space-2xl);
-
+                    row-gap: var(--space-md);
+            
                     .station {
-                        flex: 0 0 auto;
+                        flex: 1 1 0;
+                        min-width: 0;
                     }
                 }
             }
