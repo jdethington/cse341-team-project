@@ -93,10 +93,55 @@ router.get("/api/ticket-classes", (req, res, next) => {
 // /api/bookings
 /**
  * @openapi
+ * components:
+ *   schemas:
+ *     Booking:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: "JRKSR10P53"
+ *         createdAt:
+ *           type: string
+ *           example: "2026-09-17T19:47:23.048Z"
+ *         scheduleId:
+ *           type: string
+ *           example: "1"
+ *         tripId:
+ *           type: string
+ *           example: "alpine-panorama"
+ *         ticketClass:
+ *           type: string
+ *           example: "premium"
+ *         selectedDay:
+ *           type: string
+ *           example: "thursday"
+ *         passengers:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Passenger'
+ *     Passenger:
+ *       type: object
+ *       properties:
+ *         firstName:
+ *           type: string
+ *           example: "John"
+ *         lastName:
+ *           type: string
+ *           example: "Doe"
+ *         email:
+ *           type: string
+ *           example: "john.doe@example.com"
+ *         phone:
+ *           type: string
+ *           example: "123-456-7890"
+ */
+/**
+/**
+ * @openapi
  * /api/bookings:
  *   get:
  *     summary: List bookings
- *     description: Returns all bookings.
  *     tags:
  *       - Bookings
  *     responses:
@@ -113,56 +158,6 @@ router.get("/api/ticket-classes", (req, res, next) => {
  *                     $ref: '#/components/schemas/Booking'
  *       500:
  *         description: Unable to retrieve bookings
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *
- * components:
- *   schemas:
- *     Booking:
- *       type: object
- *       properties:
- *         id:
- *           type: string
- *           example: JRIXB6XMB6
- *         createdAt:
- *           type: string
- *           example: "2026-09-17T19:47:23.048Z"
- *         scheduleId:
- *           type: string
- *           example: "1"
- *         tripId:
- *           type: string
- *           example: alpine-panorama
- *         ticketClass:
- *           type: string
- *           example: premium
- *         selectedDay:
- *           type: string
- *           example: monday
- *         passengers:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/Passenger'
- *     Passenger:
- *       type: object
- *       properties:
- *         firstName:
- *           type: string
- *           example: William
- *         lastName:
- *           type: string
- *           example: Clark
- *         email:
- *           type: string
- *           example: william.clark16@example.com
- *         phone:
- *           type: string
- *           example: "+1 555-0159-8714"
  */
 router.get("/api/bookings", getAllBookings);
 

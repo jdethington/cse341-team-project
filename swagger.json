@@ -94,7 +94,6 @@
     "/api/bookings": {
       "get": {
         "summary": "List bookings",
-        "description": "Returns all bookings.",
         "tags": [
           "Bookings"
         ],
@@ -118,19 +117,7 @@
             }
           },
           "500": {
-            "description": "Unable to retrieve bookings",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
+            "description": "Unable to retrieve bookings"
           }
         }
       }
@@ -175,7 +162,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "example": "JRIXB6XMB6"
+            "example": "JRKSR10P53"
           },
           "createdAt": {
             "type": "string",
@@ -195,7 +182,7 @@
           },
           "selectedDay": {
             "type": "string",
-            "example": "monday"
+            "example": "thursday"
           },
           "passengers": {
             "type": "array",
@@ -210,19 +197,19 @@
         "properties": {
           "firstName": {
             "type": "string",
-            "example": "William"
+            "example": "John"
           },
           "lastName": {
             "type": "string",
-            "example": "Clark"
+            "example": "Doe"
           },
           "email": {
             "type": "string",
-            "example": "william.clark16@example.com"
+            "example": "john.doe@example.com"
           },
           "phone": {
             "type": "string",
-            "example": "+1 555-0159-8714"
+            "example": "123-456-7890"
           }
         }
       }

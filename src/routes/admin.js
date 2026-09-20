@@ -3,6 +3,6 @@ import { bookingsAdminPage } from "../controllers/bookings.js";
 
 const router = Router();
 
-router.get("/bookings-admin", bookingsAdminPage);
+router.get("/bookings", bookingsAdminPage);
 
 export default router;
