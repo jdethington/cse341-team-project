@@ -81,7 +81,7 @@
                     </div>
                         
                     <div class="route-actions">
-                         <a href="/trips/${trip._id || trip.id}" class="view-details-btn">
+                         <a href="/trips/${trip.id || trip._id}" class="view-details-btn">
                             View Details &amp; Book &#8594;
                         </a>
                     </div>

@@ -19,7 +19,14 @@ const connectToDb = async (options = {}) => {
   client = new MongoClient(connectionString);
   await client.connect();
   database = client.db(databaseName);
-  await mongoose.connect(connectionString, { dbName: databaseName });
+  try {
+    await mongoose.connect(connectionString, { dbName: databaseName });
+  } catch (error) {
+    await client.close();
+    client = undefined;
+    database = undefined;
+    throw error;
+  }
   return database;
 };
 
