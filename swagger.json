@@ -139,6 +139,12 @@
         "summary": "Get one station by id",
         "tags": [
           "Stations"
+    "/api/trips/{id}": {
+      "get": {
+        "summary": "Get a single trip by ID",
+        "description": "Returns one trip matching the given id.",
+        "tags": [
+          "Trips"
         ],
         "parameters": [
           {
@@ -146,6 +152,7 @@
             "name": "id",
             "required": true,
             "description": "The station id, such as nagoya",
+            "description": "The trip id",
             "schema": {
               "type": "string"
             }
@@ -158,18 +165,25 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Station"
+            "description": "The matching trip",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Trip"
                 }
               }
             }
           },
           "404": {
             "description": "Station not found",
+            "description": "Trip not found",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "error": {
+                    "message": {
                       "type": "string"
                     }
                   }
@@ -179,12 +193,14 @@
           },
           "500": {
             "description": "Unable to retrieve station",
+            "description": "Unable to retrieve trip",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
                     "error": {
+                    "message": {
                       "type": "string"
                     }
                   }
@@ -259,6 +275,53 @@
             "type": "string"
           },
           "availableDays": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "Trip": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "startStation": {
+            "type": "string"
+          },
+          "endStation": {
+            "type": "string"
+          },
+          "duration": {
+            "type": "string"
+          },
+          "distance": {
+            "type": "number"
+          },
+          "bestSeason": {
+            "type": "string"
+          },
+          "operatingMonths": {
+            "type": "array",
+            "items": {
+              "type": "number"
+            }
+          },
+          "imageUrl": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "highlights": {
             "type": "array",
             "items": {
               "type": "string"
