@@ -17,7 +17,7 @@ router.get("/about", aboutPage);
 router.get("/trains", trainsPage);
 
 // Admin pages
-router.use("/admin", adminRouter);
+router.use("/", adminRouter);
 
 // Trains API
 router.get("/api/trains", getAllTrains);

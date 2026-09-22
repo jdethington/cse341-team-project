@@ -25,7 +25,7 @@ export async function processBookingRequest(req, res) {
   } catch (error) {
     console.error("Error processing booking request:", error);
 
-    return res.status(500).render("error/500", {
+    return res.status(500).json("errors/500", {
       title: "Booking Error",
       error: "Failed to process booking request",
     });
@@ -40,7 +40,7 @@ export async function getAllBookings(req, res) {
   } catch (error) {
     console.error("Error fetching bookings:", error);
 
-    return res.status(500).render("error/500", {
+    return res.status(500).json("errors/500", {
       title: "Server Error",
       error: "Failed to fetch bookings",
     });
@@ -58,7 +58,7 @@ export async function bookingPage(req, res) {
       .findOne({ id: Number(scheduleId) });
     // const schedule = await getScheduleById(scheduleId); // Assuming getScheduleById is a function that retrieves a schedule by its ID
     if (!schedule) {
-      return res.status(404).render("error/404", {
+      return res.status(404).json("errors/404", {
         title: "Schedule Not Found",
         error: "The requested schedule does not exist.",
       });
@@ -66,7 +66,7 @@ export async function bookingPage(req, res) {
     const trip = await db.collection("trips").findOne({ id: schedule.tripId });
     // const trip = await getTripById(schedule.tripId); // Assuming getTripById is a function that retrieves a trip by its ID
     if (!trip) {
-      return res.status(404).render("error/404", {
+      return res.status(404).json("errors/404", {
         title: "Trip Not Found",
         error: "The requested trip does not exist.",
       });
@@ -89,7 +89,7 @@ export async function bookingPage(req, res) {
   } catch (error) {
     console.error("Error rendering booking page:", error);
 
-    return res.status(500).render("error/500", {
+    return res.status(500).json("errors/500", {
       title: "Server Error",
       error: "Failed to render booking page",
     });

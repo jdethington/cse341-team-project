@@ -16,9 +16,7 @@
       "get": {
         "summary": "List ticket classes",
         "description": "Returns every ticket class. Optionally filter to the classes available on a specific day with the `day` query parameter.\n",
-        "tags": [
-          "Ticket Classes"
-        ],
+        "tags": ["Ticket Classes"],
         "parameters": [
           {
             "in": "query",
@@ -94,9 +92,7 @@
     "/api/bookings": {
       "get": {
         "summary": "List bookings",
-        "tags": [
-          "Bookings"
-        ],
+        "tags": ["Bookings"],
         "responses": {
           "200": {
             "description": "Bookings retrieved successfully",
