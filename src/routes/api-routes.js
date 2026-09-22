@@ -4,6 +4,38 @@ import { getAllStations, getStationById } from "../controllers/stations.js";
 
 const router = Router();
 
+
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Station:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: nagoya
+ *         name:
+ *           type: string
+ *           example: Nagoya Station
+ *         prefecture:
+ *           type: string
+ *           example: Aichi
+ *         region:
+ *           type: string
+ *           example: central
+ *         facilities:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: ["restaurant", "shop", "restroom"]
+ *         description:
+ *           type: string
+ *           example: Major transportation hub in central Japan.
+ */
+
+
+
 /**
  * @openapi
  * /api/ticket-classes:
@@ -108,6 +140,13 @@ router.get("/api/ticket-classes", (req, res, next) => {
  *                     $ref: '#/components/schemas/Station'
  *       500:
  *         description: Unable to retrieve stations
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  */
 router.get("/api/stations", getAllStations);
 
@@ -134,39 +173,26 @@ router.get("/api/stations", getAllStations);
  *               $ref: '#/components/schemas/Station'
  *       404:
  *         description: Station not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  *       500:
  *         description: Unable to retrieve station
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  */
 router.get("/api/stations/:id", getStationById);
 
-/**
- * @openapi
- * components:
- *   schemas:
- *     Station:
- *       type: object
- *       properties:
- *         id:
- *           type: string
- *           example: nagoya
- *         name:
- *           type: string
- *           example: Nagoya Station
- *         prefecture:
- *           type: string
- *           example: Aichi
- *         region:
- *           type: string
- *           example: central
- *         facilities:
- *           type: array
- *           items:
- *             type: string
- *           example: ["restaurant", "shop", "restroom"]
- *         description:
- *           type: string
- *           example: Major transportation hub in central Japan.
- */
+
 
 
 export default router;
