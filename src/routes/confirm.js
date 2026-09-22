@@ -4,9 +4,9 @@ export default async (req, res) => {
   try {
     const { confirmationId } = req.params;
 
-    const booking = await getBookingById(confirmationId);
+    const confirmation = await getBookingById(confirmationId);
 
-    if (!booking) {
+    if (!confirmation) {
       return res.status(404).json("errors/404", {
         title: "Booking Not Found",
         error: "The booking confirmation ID provided does not exist.",
@@ -15,9 +15,8 @@ export default async (req, res) => {
 
     return res.render("trips/confirm", {
       title: "Trip Confirmation",
-      booking,
+      confirmation,
     });
-
   } catch (error) {
     // console.error("Error rendering confirmation page:", error);
     return res.status(500).json("errors/500", {
@@ -26,4 +25,3 @@ export default async (req, res) => {
     });
   }
 };
-
