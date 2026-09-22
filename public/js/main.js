@@ -143,8 +143,10 @@ const hookBookingsCatalog = async () => {
         booking.selectedDay;
 
       const passengersEl = card.querySelector('[data-field="passengers"]');
-
-      booking.passengers.forEach((passenger) => {
+      const passengers = Array.isArray(booking.passengers)
+        ? booking.passengers
+        : Object.values(booking.passengers || {});
+      passengers.forEach((passenger) => {
         const passengerEl = document.createElement("li");
 
         passengerEl.textContent =
