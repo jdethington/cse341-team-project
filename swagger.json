@@ -91,35 +91,39 @@
         }
       }
     },
-    "/api/trips": {
+    "/api/stations": {
       "get": {
-        "summary": "List all trips",
-        "description": "Returns every scenic trip in the database.",
+        "summary": "List all stations",
         "tags": [
-          "Trips"
+          "Stations"
         ],
         "responses": {
           "200": {
-            "description": "All trips",
+            "description": "Stations returned successfully",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/Trip"
+                  "type": "object",
+                  "properties": {
+                    "stations": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Station"
+                      }
+                    }
                   }
                 }
               }
             }
           },
           "500": {
-            "description": "Unable to retrieve trips",
+            "description": "Unable to retrieve stations",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "message": {
+                    "error": {
                       "type": "string"
                     }
                   }
@@ -130,6 +134,11 @@
         }
       }
     },
+    "/api/stations/{id}": {
+      "get": {
+        "summary": "Get one station by id",
+        "tags": [
+          "Stations"
     "/api/trips/{id}": {
       "get": {
         "summary": "Get a single trip by ID",
@@ -142,6 +151,7 @@
             "in": "path",
             "name": "id",
             "required": true,
+            "description": "The station id, such as nagoya",
             "description": "The trip id",
             "schema": {
               "type": "string"
@@ -150,6 +160,11 @@
         ],
         "responses": {
           "200": {
+            "description": "Station returned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Station"
             "description": "The matching trip",
             "content": {
               "application/json": {
@@ -160,12 +175,14 @@
             }
           },
           "404": {
+            "description": "Station not found",
             "description": "Trip not found",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "error": {
                     "message": {
                       "type": "string"
                     }
@@ -175,12 +192,14 @@
             }
           },
           "500": {
+            "description": "Unable to retrieve station",
             "description": "Unable to retrieve trip",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "error": {
                     "message": {
                       "type": "string"
                     }
@@ -195,6 +214,42 @@
   },
   "components": {
     "schemas": {
+      "Station": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "nagoya"
+          },
+          "name": {
+            "type": "string",
+            "example": "Nagoya Station"
+          },
+          "prefecture": {
+            "type": "string",
+            "example": "Aichi"
+          },
+          "region": {
+            "type": "string",
+            "example": "central"
+          },
+          "facilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "restaurant",
+              "shop",
+              "restroom"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "example": "Major transportation hub in central Japan."
+          }
+        }
+      },
       "TicketClass": {
         "type": "object",
         "properties": {
