@@ -1,41 +1,8 @@
 import { Router } from "express";
 import { getAllTicketClasses, getTicketClassesForDay } from "../controllers/ticket-classes.js";
-import { getAllStations, getStationById } from "../controllers/stations.js";
 import { getAllTrips, getTripById } from "../controllers/trips.js";
 
 const router = Router();
-
-
-/**
- * @openapi
- * components:
- *   schemas:
- *     Station:
- *       type: object
- *       properties:
- *         id:
- *           type: string
- *           example: nagoya
- *         name:
- *           type: string
- *           example: Nagoya Station
- *         prefecture:
- *           type: string
- *           example: Aichi
- *         region:
- *           type: string
- *           example: central
- *         facilities:
- *           type: array
- *           items:
- *             type: string
- *           example: ["restaurant", "shop", "restroom"]
- *         description:
- *           type: string
- *           example: Major transportation hub in central Japan.
- */
-
-
 
 /**
  * @openapi
@@ -143,18 +110,6 @@ router.get("/api/ticket-classes", (req, res, next) => {
  *             schema:
  *               type: object
  *               properties:
- *                 error:
- *                   type: string
- */
-router.get("/api/stations", getAllStations);
-
-/**
- * @openapi
- * /api/stations/{id}:
- *   get:
- *     summary: Get one station by id
- *     tags:
- *       - Stations
  *                 message:
  *                   type: string
  * /api/trips/{id}:
@@ -167,19 +122,11 @@ router.get("/api/stations", getAllStations);
  *       - in: path
  *         name: id
  *         required: true
- *         description: The station id, such as nagoya
  *         description: The trip id
  *         schema:
  *           type: string
  *     responses:
  *       200:
- *         description: Station returned successfully
- *         content:
- *           application/json:
- *             schema:
- *               $ref: '#/components/schemas/Station'
- *       404:
- *         description: Station not found
  *         description: The matching trip
  *         content:
  *           application/json:
@@ -192,10 +139,6 @@ router.get("/api/stations", getAllStations);
  *             schema:
  *               type: object
  *               properties:
- *                 error:
- *                   type: string
- *       500:
- *         description: Unable to retrieve station
  *                 message:
  *                   type: string
  *       500:
@@ -205,13 +148,6 @@ router.get("/api/stations", getAllStations);
  *             schema:
  *               type: object
  *               properties:
- *                 error:
- *                   type: string
- */
-router.get("/api/stations/:id", getStationById);
-
-
-
  *                 message:
  *                   type: string
  * components:
