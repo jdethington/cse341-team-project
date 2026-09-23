@@ -1,10 +1,7 @@
 import apiRoutes from "./api-routes.js";
 import railTripsRouter from "./trips.js";
-import {
-  trainsPage,
-  getTrainById,
-  getAllTrains,
-} from "./trains.js";
+import adminRouter from "./admin.js";
+import { trainsPage, getTrainById, getAllTrains } from "./trains.js";
 import { Router } from "express";
 import { homePage, aboutPage, testErrorPage } from "./index.js";
 
@@ -18,6 +15,9 @@ router.get("/about", aboutPage);
 
 // Trains page
 router.get("/trains", trainsPage);
+
+// Admin pages
+router.use("/", adminRouter);
 
 // Trains API
 router.get("/api/trains", getAllTrains);

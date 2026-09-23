@@ -1,9 +1,14 @@
 import { Router } from "express";
-import { getAllTicketClasses, getTicketClassesForDay } from "../controllers/ticket-classes.js";
+import {
+  getAllTicketClasses,
+  getTicketClassesForDay,
+} from "../controllers/ticket-classes.js";
 import { getAllTrips, getTripById } from "../controllers/trips.js";
+import { getAllBookings } from "../controllers/bookings.js";
 
 const router = Router();
 
+// /api/ticket-classes
 /**
  * @openapi
  * /api/ticket-classes:
@@ -186,5 +191,75 @@ router.get("/api/ticket-classes", (req, res, next) => {
  */
 router.get("/api/trips", getAllTrips);
 router.get("/api/trips/:id", getTripById);
+
+// /api/bookings
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Booking:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: "JRKSR10P53"
+ *         createdAt:
+ *           type: string
+ *           example: "2026-09-17T19:47:23.048Z"
+ *         scheduleId:
+ *           type: string
+ *           example: "1"
+ *         tripId:
+ *           type: string
+ *           example: "alpine-panorama"
+ *         ticketClass:
+ *           type: string
+ *           example: "premium"
+ *         selectedDay:
+ *           type: string
+ *           example: "thursday"
+ *         passengers:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Passenger'
+ *     Passenger:
+ *       type: object
+ *       properties:
+ *         firstName:
+ *           type: string
+ *           example: "John"
+ *         lastName:
+ *           type: string
+ *           example: "Doe"
+ *         email:
+ *           type: string
+ *           example: "john.doe@example.com"
+ *         phone:
+ *           type: string
+ *           example: "123-456-7890"
+ */
+/**
+ * @openapi
+ * /api/bookings:
+ *   get:
+ *     summary: List bookings
+ *     tags:
+ *       - Bookings
+ *     responses:
+ *       200:
+ *         description: Bookings retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 bookings:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Booking'
+ *       500:
+ *         description: Unable to retrieve bookings
+ */
+router.get("/api/bookings", getAllBookings);
 
 export default router;
