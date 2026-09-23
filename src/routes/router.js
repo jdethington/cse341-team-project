@@ -4,6 +4,7 @@ import adminRouter from "./admin.js";
 import { trainsPage, getTrainById, getAllTrains } from "./trains.js";
 import { Router } from "express";
 import { homePage, aboutPage, testErrorPage } from "./index.js";
+import { renderTripDetails } from "../controllers/trips.js";
 
 const router = Router();
 
@@ -22,6 +23,9 @@ router.use("/", adminRouter);
 // Trains API
 router.get("/api/trains", getAllTrains);
 router.get("/api/trains/:id", getTrainById);
+
+// Trip Details page (e.g., /trips/alpine-panorama)
+router.get("/trips/:id", renderTripDetails);
 
 // JSON API endpoints
 router.use("/", apiRoutes);

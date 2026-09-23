@@ -8,6 +8,12 @@ export async function getSchedulesForTrip(req, res) {
     try {
         const tripId = req.params.id;
         const { month } = req.query;
+        if (month !== undefined && month !== "") {
+            const monthNum = Number(month);
+            if (!Number.isInteger(monthNum) || monthNum < 1 || monthNum > 12) {
+                return res.status(400).json({ error: "month must be an integer from 1 to 12" });
+            }
+        }
         const schedules = await findScheduleById(tripId, month);
         // schedules is always an array - return it directly
         return res.status(200).json(schedules);

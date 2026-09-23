@@ -15,7 +15,7 @@ export async function getSchedulesByTripId(tripId, month) {
         const trip = await Trip.findOne({ id: tripId }).lean();
 
         // If the trip doesn't exist, OR if month is NOT in its operatingMonths array:
-        if (!trip || !trip.operatingMonths?.includes(monthNum)) {
+        if (!trip || !trip.operatingMonths?.some(m => Number(m) === monthNum)) {
             // Return an empty list because the trip doesn't run in this month
             return [];
         }

@@ -275,8 +275,8 @@ router.get("/api/bookings", getAllBookings);
  *           type: string
  *           example: "6aad538fb32652d06b5deae0"
  *         id:
- *           type: integer
- *           example: 1
+ *           type: string
+ *           example: "1"
  *         tripId:
  *           type: string
  *           example: "alpine-panorama"
