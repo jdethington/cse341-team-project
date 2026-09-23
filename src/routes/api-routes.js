@@ -5,6 +5,7 @@ import {
 } from "../controllers/ticket-classes.js";
 import { getAllTrips, getTripById } from "../controllers/trips.js";
 import { getAllBookings } from "../controllers/bookings.js";
+import { getAllSchedules, getSchedulesForTrip } from "../controllers/schedules.js";
 
 const router = Router();
 
@@ -261,5 +262,99 @@ router.get("/api/trips/:id", getTripById);
  *         description: Unable to retrieve bookings
  */
 router.get("/api/bookings", getAllBookings);
+
+// Schedules API
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Schedule:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *           example: "6aad538fb32652d06b5deae0"
+ *         id:
+ *           type: string
+ *           example: "1"
+ *         tripId:
+ *           type: string
+ *           example: "alpine-panorama"
+ *         departureTime:
+ *           type: string
+ *           example: "08:30"
+ *         arrivalTime:
+ *           type: string
+ *           example: "13:00"
+ *         daysOfWeek:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: ["monday", "tuesday", "wednesday", "thursday", "friday"]
+ *         status:
+ *           type: boolean
+ *           example: true
+ */
+
+/**
+ * @openapi
+ * /api/schedules:
+ *   get:
+ *     summary: Retrieve all schedules
+ *     tags:
+ *       - Schedules
+ *     responses:
+ *       200:
+ *         description: A list of all schedules in the database
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 schedules:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Schedule'
+ *       500:
+ *         description: Failed to fetch schedules
+ */
+router.get("/api/schedules", getAllSchedules);
+
+/**
+ * @openapi
+ * /api/trips/{id}/schedules:
+ *   get:
+ *     summary: Retrieve schedules for a specific trip (optionally filtered by month)
+ *     tags:
+ *       - Schedules
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The trip identifier (e.g., alpine-panorama)
+ *       - in: query
+ *         name: month
+ *         required: false
+ *         schema:
+ *           type: string
+ *         description: Optional month value to filter schedule results
+ *     responses:
+ *       200:
+ *         description: A list of schedules matching the trip ID and optional month
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Schedule'
+ *       404:
+ *         description: Schedules not found
+ *       500:
+ *         description: Failed to fetch schedules
+ */
+router.get("/api/trips/:id/schedules", getSchedulesForTrip);
+
 
 export default router;
