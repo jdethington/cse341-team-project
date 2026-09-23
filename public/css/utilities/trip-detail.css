@@ -156,6 +156,34 @@ article.route-detail {
                         font-weight: 500;
                         color: var(--clr-primary);
                     }
+
+                    .station-details {
+                        max-width: 100%;
+                        padding: var(--space-md);
+                        margin-top: var(--space-sm);
+                        background-color: var(--clr-surface);
+                        border: 1px solid var(--clr-border-light);
+                        border-radius: var(--radius-md);
+                        font-size: var(--font-size-sm);
+                        color: var(--clr-text-secondary);
+                        word-break: break-word;
+                        overflow-wrap: anywhere;
+                    }
+
+                    .station-details-list {
+                        display: grid;
+                        gap: var(--space-xs);
+                        margin: 0;
+
+                        dt {
+                            font-weight: 600;
+                            color: var(--clr-text-primary);
+                        }
+
+                        dd {
+                            margin: 0;
+                        }
+                    }
                 }
             }
         }
@@ -314,14 +342,17 @@ article.route-detail {
                 grid-area: stations;
 
                 .stations {
-                    display: inline-flex;
+                    display: flex;
                     flex-direction: row;
-                    align-items: center;
+                    flex-wrap: wrap;
+                    align-items: flex-start;
                     justify-content: space-between;
                     column-gap: var(--space-2xl);
+                    row-gap: var(--space-md);
 
                     .station {
-                        flex: 0 0 auto;
+                        flex: 1 1 0;
+                        min-width: 0;
                     }
                 }
             }

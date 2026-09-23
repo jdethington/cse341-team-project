@@ -3,13 +3,165 @@ import {
   getAllTicketClasses,
   getTicketClassesForDay,
 } from "../controllers/ticket-classes.js";
+import { getAllStations, getStationById } from "../controllers/stations.js";
 import { getAllTrips, getTripById } from "../controllers/trips.js";
 import { getAllBookings } from "../controllers/bookings.js";
-import { getAllSchedules, getSchedulesForTrip } from "../controllers/schedules.js";
+import {
+  getAllSchedules,
+  getSchedulesForTrip,
+} from "../controllers/schedules.js";
 
 const router = Router();
 
 // /api/ticket-classes
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Station:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: nagoya
+ *         name:
+ *           type: string
+ *           example: Nagoya Station
+ *         prefecture:
+ *           type: string
+ *           example: Aichi
+ *         region:
+ *           type: string
+ *           example: central
+ *         facilities:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: ["restaurant", "shop", "restroom"]
+ *         description:
+ *           type: string
+ *           example: Major transportation hub in central Japan.
+ *     TicketClass:
+ *       type: object
+ *       properties:
+ *         class:
+ *           type: string
+ *           example: premium
+ *         name:
+ *           type: string
+ *           example: Premium Class
+ *         pricePerKm:
+ *           type: number
+ *           example: 150
+ *         amenities:
+ *           type: array
+ *           items:
+ *             type: string
+ *         description:
+ *           type: string
+ *         availableDays:
+ *           type: array
+ *           items:
+ *             type: string
+ *     Trip:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *         name:
+ *           type: string
+ *         region:
+ *           type: string
+ *         startStation:
+ *           type: string
+ *         endStation:
+ *           type: string
+ *         duration:
+ *           type: string
+ *         distance:
+ *           type: number
+ *         bestSeason:
+ *           type: string
+ *         operatingMonths:
+ *           type: array
+ *           items:
+ *             type: number
+ *         imageUrl:
+ *           type: string
+ *         description:
+ *           type: string
+ *         highlights:
+ *           type: array
+ *           items:
+ *             type: string
+ *     Booking:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: "JRKSR10P53"
+ *         createdAt:
+ *           type: string
+ *           example: "2026-09-17T19:47:23.048Z"
+ *         scheduleId:
+ *           type: string
+ *           example: "1"
+ *         tripId:
+ *           type: string
+ *           example: "alpine-panorama"
+ *         ticketClass:
+ *           type: string
+ *           example: "premium"
+ *         selectedDay:
+ *           type: string
+ *           example: "thursday"
+ *         passengers:
+ *           type: array
+ *           items:
+ *             $ref: '#/components/schemas/Passenger'
+ *     Passenger:
+ *       type: object
+ *       properties:
+ *         firstName:
+ *           type: string
+ *           example: "John"
+ *         lastName:
+ *           type: string
+ *           example: "Doe"
+ *         email:
+ *           type: string
+ *           example: "john.doe@example.com"
+ *         phone:
+ *           type: string
+ *           example: "123-456-7890"
+ *     Schedule:
+ *       type: object
+ *       properties:
+ *         _id:
+ *           type: string
+ *           example: "6aad538fb32652d06b5deae0"
+ *         id:
+ *           type: string
+ *           example: "1"
+ *         tripId:
+ *           type: string
+ *           example: "alpine-panorama"
+ *         departureTime:
+ *           type: string
+ *           example: "08:30"
+ *         arrivalTime:
+ *           type: string
+ *           example: "13:00"
+ *         daysOfWeek:
+ *           type: array
+ *           items:
+ *             type: string
+ *           example: ["monday", "tuesday", "wednesday", "thursday", "friday"]
+ *         status:
+ *           type: boolean
+ *           example: true
+ */
+
 /**
  * @openapi
  * /api/ticket-classes:
@@ -60,30 +212,6 @@ const router = Router();
  *               properties:
  *                 error:
  *                   type: string
- * components:
- *   schemas:
- *     TicketClass:
- *       type: object
- *       properties:
- *         class:
- *           type: string
- *           example: premium
- *         name:
- *           type: string
- *           example: Premium Class
- *         pricePerKm:
- *           type: number
- *           example: 150
- *         amenities:
- *           type: array
- *           items:
- *             type: string
- *         description:
- *           type: string
- *         availableDays:
- *           type: array
- *           items:
- *             type: string
  */
 router.get("/api/ticket-classes", (req, res, next) => {
   if (req.query.day !== undefined) {
@@ -91,6 +219,79 @@ router.get("/api/ticket-classes", (req, res, next) => {
   }
   return getAllTicketClasses(req, res, next);
 });
+
+/**
+ * @openapi
+ * /api/stations:
+ *   get:
+ *     summary: List all stations
+ *     tags:
+ *       - Stations
+ *     responses:
+ *       200:
+ *         description: Stations returned successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 stations:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Station'
+ *       500:
+ *         description: Unable to retrieve stations
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+router.get("/api/stations", getAllStations);
+
+/**
+ * @openapi
+ * /api/stations/{id}:
+ *   get:
+ *     summary: Get one station by id
+ *     tags:
+ *       - Stations
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The station id, such as nagoya
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Station returned successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Station'
+ *       404:
+ *         description: Station not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       500:
+ *         description: Unable to retrieve station
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+router.get("/api/stations/:id", getStationById);
 
 /**
  * @openapi
@@ -118,6 +319,11 @@ router.get("/api/ticket-classes", (req, res, next) => {
  *               properties:
  *                 message:
  *                   type: string
+ */
+router.get("/api/trips", getAllTrips);
+
+/**
+ * @openapi
  * /api/trips/{id}:
  *   get:
  *     summary: Get a single trip by ID
@@ -156,89 +362,10 @@ router.get("/api/ticket-classes", (req, res, next) => {
  *               properties:
  *                 message:
  *                   type: string
- * components:
- *   schemas:
- *     Trip:
- *       type: object
- *       properties:
- *         id:
- *           type: string
- *         name:
- *           type: string
- *         region:
- *           type: string
- *         startStation:
- *           type: string
- *         endStation:
- *           type: string
- *         duration:
- *           type: string
- *         distance:
- *           type: number
- *         bestSeason:
- *           type: string
- *         operatingMonths:
- *           type: array
- *           items:
- *             type: number
- *         imageUrl:
- *           type: string
- *         description:
- *           type: string
- *         highlights:
- *           type: array
- *           items:
- *             type: string
  */
-router.get("/api/trips", getAllTrips);
 router.get("/api/trips/:id", getTripById);
 
 // /api/bookings
-/**
- * @openapi
- * components:
- *   schemas:
- *     Booking:
- *       type: object
- *       properties:
- *         id:
- *           type: string
- *           example: "JRKSR10P53"
- *         createdAt:
- *           type: string
- *           example: "2026-09-17T19:47:23.048Z"
- *         scheduleId:
- *           type: string
- *           example: "1"
- *         tripId:
- *           type: string
- *           example: "alpine-panorama"
- *         ticketClass:
- *           type: string
- *           example: "premium"
- *         selectedDay:
- *           type: string
- *           example: "thursday"
- *         passengers:
- *           type: array
- *           items:
- *             $ref: '#/components/schemas/Passenger'
- *     Passenger:
- *       type: object
- *       properties:
- *         firstName:
- *           type: string
- *           example: "John"
- *         lastName:
- *           type: string
- *           example: "Doe"
- *         email:
- *           type: string
- *           example: "john.doe@example.com"
- *         phone:
- *           type: string
- *           example: "123-456-7890"
- */
 /**
  * @openapi
  * /api/bookings:
@@ -264,38 +391,6 @@ router.get("/api/trips/:id", getTripById);
 router.get("/api/bookings", getAllBookings);
 
 // Schedules API
-/**
- * @openapi
- * components:
- *   schemas:
- *     Schedule:
- *       type: object
- *       properties:
- *         _id:
- *           type: string
- *           example: "6aad538fb32652d06b5deae0"
- *         id:
- *           type: string
- *           example: "1"
- *         tripId:
- *           type: string
- *           example: "alpine-panorama"
- *         departureTime:
- *           type: string
- *           example: "08:30"
- *         arrivalTime:
- *           type: string
- *           example: "13:00"
- *         daysOfWeek:
- *           type: array
- *           items:
- *             type: string
- *           example: ["monday", "tuesday", "wednesday", "thursday", "friday"]
- *         status:
- *           type: boolean
- *           example: true
- */
-
 /**
  * @openapi
  * /api/schedules:
@@ -355,6 +450,5 @@ router.get("/api/schedules", getAllSchedules);
  *         description: Failed to fetch schedules
  */
 router.get("/api/trips/:id/schedules", getSchedulesForTrip);
-
 
 export default router;

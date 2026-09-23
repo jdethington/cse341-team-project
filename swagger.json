@@ -91,6 +91,110 @@
         }
       }
     },
+    "/api/stations": {
+      "get": {
+        "summary": "List all stations",
+        "tags": [
+          "Stations"
+        ],
+        "responses": {
+          "200": {
+            "description": "Stations returned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "stations": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Station"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unable to retrieve stations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/stations/{id}": {
+      "get": {
+        "summary": "Get one station by id",
+        "tags": [
+          "Stations"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "The station id, such as nagoya",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Station returned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Station"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Station not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unable to retrieve station",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/trips": {
       "get": {
         "summary": "List all trips",
@@ -306,6 +410,42 @@
   },
   "components": {
     "schemas": {
+      "Station": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "nagoya"
+          },
+          "name": {
+            "type": "string",
+            "example": "Nagoya Station"
+          },
+          "prefecture": {
+            "type": "string",
+            "example": "Aichi"
+          },
+          "region": {
+            "type": "string",
+            "example": "central"
+          },
+          "facilities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "example": [
+              "restaurant",
+              "shop",
+              "restroom"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "example": "Major transportation hub in central Japan."
+          }
+        }
+      },
       "TicketClass": {
         "type": "object",
         "properties": {
@@ -449,8 +589,8 @@
             "example": "6aad538fb32652d06b5deae0"
           },
           "id": {
-            "type": "integer",
-            "example": 1
+            "type": "string",
+            "example": "1"
           },
           "tripId": {
             "type": "string",
