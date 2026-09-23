@@ -1,6 +1,6 @@
 <%- include('../partials/header') %>
 
-    <article class="route-detail">
+    <article class="route-detail" data-trip-id="<%= details.id %>">
         <div class="route-header">
             <div class="route-header-content">
                 <h1 class="route-name">
@@ -111,6 +111,7 @@
 
             <div class="route-operating">
                 <h2>Operating Schedule</h2>
+                <h3>Route operates during these months:</h3>
                 <div class="months-grid">
                     <% details.operatingMonths.forEach(function(month) { %>
                         <span class="month-badge">
@@ -120,41 +121,94 @@
                 </div>
             </div>
 
-            <% if (details.schedules && details.schedules.length> 0) { %>
-                <div class="route-schedules">
-                    <h2>Available Schedules</h2>
-                    <div class="schedules-grid">
-                        <% details.schedules.forEach(function(schedule) { %>
-                            <div class="schedule-card">
-                                <div class="schedule-times">
-                                    <div class="time-block">
-                                        <span class="time-label">Departs</span>
-                                        <span class="time-value">
-                                            <%= schedule.departureTime %>
-                                        </span>
-                                    </div>
-                                    <span class="time-arrow">→</span>
-                                    <div class="time-block">
-                                        <span class="time-label">Arrives</span>
-                                        <span class="time-value">
-                                            <%= schedule.arrivalTime %>
-                                        </span>
-                                    </div>
-                                </div>
-                                <div class="schedule-days">
-                                    <% schedule.daysOfWeek.forEach(function(day) { %>
-                                        <span class="day-badge">
-                                            <%= day.substring(0, 3) %>
-                                        </span>
-                                        <% }); %>
-                                </div>
-                                <a href="/trips/booking/<%= schedule.id %>" class="book-btn">Book Now</a>
-                            </div>
+            <!-- Dynamic Schedules Section powered by API -->
+            <div class="route-schedules">
+                <h2>Available Schedules</h2>
+
+                <div class="schedule-filter" style="margin-bottom: 1.5rem;">
+                    <label for="month-select" style="font-weight: bold; margin-right: 0.5rem;">Filter by Month:</label>
+                    <select id="month-select" class="month-dropdown">
+                        <option value="">All Months</option>
+                        <% details.operatingMonths.forEach(function(month) { %>
+                            <option value="<%= month %>">
+                                <%= month %>
+                            </option>
                             <% }); %>
-                    </div>
+                    </select>
                 </div>
-                <% } %>
+
+                <div id="schedules-container" class="schedules-grid">
+                    <p>Loading schedules...</p>
+                </div>
+            </div>
         </div>
     </article>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const article = document.querySelector('.route-detail');
+            const tripId = article.getAttribute('data-trip-id');
+            const monthSelect = document.getElementById('month-select');
+            const schedulesContainer = document.getElementById('schedules-container');
+
+            async function fetchSchedules(month = '') {
+                schedulesContainer.innerHTML = '<p>Loading schedules...</p>';
+                try {
+                    let url = `/api/trips/${tripId}/schedules`;
+                    if (month) {
+                        url += `?month=${encodeURIComponent(month)}`;
+                    }
+
+                    const response = await fetch(url);
+                    if (!response.ok) {
+                        throw new Error('Failed to load schedules');
+                    }
+
+                    const schedules = await response.json();
+                    renderSchedules(schedules);
+                } catch (error) {
+                    console.error('Error fetching schedules:', error);
+                    schedulesContainer.innerHTML = '<p class="error">No schedules available for the selected month.</p>';
+                }
+            }
+
+            function renderSchedules(schedules) {
+                if (!schedules || schedules.length === 0) {
+                    schedulesContainer.innerHTML = '<p>No schedules available for this selection.</p>';
+                    return;
+                }
+
+                schedulesContainer.innerHTML = schedules.map(schedule => `
+                                <div class="schedule-card">
+                                    <div class="schedule-times">
+                                        <div class="time-block">
+                                            <span class="time-label">Departs</span>
+                                            <span class="time-value">${schedule.departureTime}</span>
+                                        </div>
+                                        <span class="time-arrow">→</span>
+                                        <div class="time-block">
+                                            <span class="time-label">Arrives</span>
+                                            <span class="time-value">${schedule.arrivalTime}</span>
+                                        </div>
+                                    </div>
+                                    <div class="schedule-days">
+                                        ${(schedule.daysOfWeek || []).map(day => `
+                                            <span class="day-badge">${day.substring(0, 3)}</span>
+                                        `).join('')}
+                                    </div>
+                                    <a href="/trips/booking/${schedule.id}" class="book-btn">Book Now</a>
+                                </div>
+                            `).join('');
+            }
+
+            // Initial fetch for all schedules on load
+            fetchSchedules();
+
+            // Re-fetch when month dropdown changes
+            monthSelect.addEventListener('change', (e) => {
+                fetchSchedules(e.target.value);
+            });
+        });
+    </script>
 
     <%- include('../partials/footer') %>

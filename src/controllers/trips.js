@@ -1,5 +1,24 @@
 import { getAllTrips as fetchAllTrips, getTripById as fetchTripById } from '../models/trips.js';
 
+// Page Controller: Render EJS Trip Details page
+export async function renderTripDetails(req, res, next) {
+    try {
+        const tripId = req.params.id;
+        const details = await fetchTripById(tripId);
+        if (!details) {
+            const err = new Error('Trip not found');
+            err.status = 404;
+            return next(err);
+        }
+        return res.render('trips/details', {
+            title: 'Trip Details',
+            details
+        });
+    } catch (error) {
+        return next(error);
+    }
+}
+
 // Get all trips
 export async function getAllTrips(req, res) {
     try {
