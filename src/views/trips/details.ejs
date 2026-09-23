@@ -50,12 +50,46 @@
             <div class="stations">
                 <div class="station">
                     <span class="station-label">Start</span>
-                    <span class="station-name"><%= details.startStation.charAt(0).toUpperCase() + details.startStation.slice(1) %></span>
+                    <span class="station-name">
+                        <%= details.startStation.charAt(0).toUpperCase() + details.startStation.slice(1) %>
+                    </span>
+                    <button type="button" class="station-details-btn" data-station-id="<%= details.startStation %>">View
+                        Station</button>
+                    <div class="station-details" hidden></div>
                 </div>
                 <div class="station">
                     <span class="station-label">End</span>
-                    <span class="station-name"><%= details.endStation.charAt(0).toUpperCase() + details.endStation.slice(1) %></span>
+                    <span class="station-name">
+                        <%= details.endStation.charAt(0).toUpperCase() + details.endStation.slice(1) %>
+                    </span>
+                    <button type="button" class="station-details-btn" data-station-id="<%= details.endStation %>">View
+                        Station</button>
+                    <div class="station-details" hidden></div>
                 </div>
+                <template id="station-details-template">
+                    <dl class="station-details-list">
+                        <div>
+                            <dt>Name</dt>
+                            <dd data-field="name"></dd>
+                        </div>
+                        <div>
+                            <dt>Prefecture</dt>
+                            <dd data-field="prefecture"></dd>
+                        </div>
+                        <div>
+                            <dt>Region</dt>
+                            <dd data-field="region"></dd>
+                        </div>
+                        <div>
+                            <dt>Facilities</dt>
+                            <dd data-field="facilities"></dd>
+                        </div>
+                        <div>
+                            <dt>Description</dt>
+                            <dd data-field="description"></dd>
+                        </div>
+                    </dl>
+                </template>
             </div>
         </div>
 
