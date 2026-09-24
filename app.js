@@ -32,13 +32,19 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(globalMiddleware);
 
 // Set up session management. Must be registered before any route or middleware that uses the session.
-// In production and local development the real secret is provided by the SESSION_SECRET
-// environment variable (local .env / Render). The fallback below only keeps the app bootable
-// in contexts with no secret configured (e.g. a fresh test run) — it is not a real secret.
-const sessionSecret = process.env.SESSION_SECRET || 'kizuna-rail-insecure-dev-fallback-change-me';
+// The secret must be provided via the SESSION_SECRET environment variable (local .env / Render).
+// It is required in production and local development — the app refuses to boot without it,
+// so no one accidentally runs with a shared, insecure default. The only exception is the test
+// runner (NODE_ENV=test), which supplies a clearly-labeled non-secret value below.
+const isTestEnvironment = (process.env.NODE_ENV || '').toLowerCase().includes('test');
+const sessionSecret = process.env.SESSION_SECRET;
+
+if (!sessionSecret && !isTestEnvironment) {
+    throw new Error("SESSION_SECRET is required.");
+}
 
 app.use(session({
-    secret: sessionSecret,
+    secret: sessionSecret || 'kizuna-rail-insecure-test-only-not-a-real-secret',
     resave: false,
     saveUninitialized: false,
     rolling: true,
