@@ -31,3 +31,13 @@ export async function findUser(identifier) {
 export async function verifyPassword(password, passwordHash) {
     return bcrypt.compare(password, passwordHash);
 }
+
+// Returns true when the username is already taken (for friendly registration errors).
+export async function usernameExists(username) {
+    return Boolean(await User.exists({ username }));
+}
+
+// Returns true when the email is already taken (for friendly registration errors).
+export async function emailExists(email) {
+    return Boolean(await User.exists({ email }));
+}

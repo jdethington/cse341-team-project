@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 import session from 'express-session';
 import pkg from './package.json' with { type: 'json' };
 import globalMiddleware from './src/middleware/global.js';
+import flash from './src/middleware/flash.js';
 import routes from './src/routes/router.js';
 import { loadSessionUser } from './src/middleware/auth.js';
 import swaggerUi from 'swagger-ui-express';
@@ -53,6 +54,9 @@ app.use(session({
 
 // Copy the session user to req.user / res.locals.user for routes and EJS templates.
 app.use(loadSessionUser);
+
+// Make flash messages available to routes (req.flash) and templates (res.locals.flash).
+app.use(flash);
 
 app.use('/', routes);
 

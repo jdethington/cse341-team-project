@@ -1,0 +1,50 @@
+<%- include('./partials/header') %>
+
+<section class="auth-page">
+    <div class="auth-card">
+        <h1 class="auth-title">Create your account</h1>
+        <p class="auth-subtitle">Sign up to book tickets and manage your reservations.</p>
+
+        <form class="auth-form" method="POST" action="/register">
+            <div class="form-group">
+                <label class="form-label" for="name">Full name</label>
+                <input class="form-input" type="text" id="name" name="name"
+                    value="<%= values.name %>" autocomplete="name" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="username">Username</label>
+                <input class="form-input" type="text" id="username" name="username"
+                    value="<%= values.username %>" autocomplete="username" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="email">Email</label>
+                <input class="form-input" type="email" id="email" name="email"
+                    value="<%= values.email %>" autocomplete="email" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <input class="form-input" type="password" id="password" name="password"
+                    autocomplete="new-password" minlength="8" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="confirmPassword">Confirm password</label>
+                <input class="form-input" type="password" id="confirmPassword" name="confirmPassword"
+                    autocomplete="new-password" minlength="8" required>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn-primary" type="submit">Create account</button>
+            </div>
+        </form>
+
+        <p class="auth-alt">
+            Already have an account? <a href="/login">Sign in</a>
+        </p>
+    </div>
+</section>
+
+<%- include('./partials/footer') %>
