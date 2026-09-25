@@ -38,10 +38,34 @@
                     <li><a href="/trips">Trips</a></li>
                     <li><a href="/trains">Trains</a></li>
                     <li><a href="/about">About</a></li>
+                    <% if (user) { %>
+                        <li><a href="/account">Account</a></li>
+                        <% if (user.role === 'admin') { %>
+                            <li><a href="/admin/dashboard">Admin Dashboard</a></li>
+                        <% } %>
+                        <li>
+                            <form class="auth-nav-form" method="POST" action="/logout">
+                                <button class="auth-logout-button" type="submit">Sign out</button>
+                            </form>
+                        </li>
+                    <% } else { %>
+                        <li><a class="auth-nav-link" href="/login">Sign in</a></li>
+                        <li><a class="auth-nav-link" href="/register">Create account</a></li>
+                    <% } %>
                     <li><a href="/404">404</a></li>
                     <li><a href="/500">500</a></li>
                 </ul>
             </nav>
         </div>
     </header>
+
+    <% const flashMessages = flash(); %>
+    <% Object.keys(flashMessages).forEach((type) => { %>
+        <% if (flashMessages[type].length > 0) { %>
+            <% flashMessages[type].forEach((message) => { %>
+                <div class="alert <%= type %>"><%= message %></div>
+            <% }) %>
+        <% } %>
+    <% }) %>
+
     <main class="content-grid">

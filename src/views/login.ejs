@@ -1,0 +1,32 @@
+<%- include('./partials/header') %>
+
+<section class="auth-page">
+    <div class="auth-card">
+        <h1 class="auth-title">Welcome back</h1>
+        <p class="auth-subtitle">Sign in with your username or email.</p>
+
+        <form class="auth-form" method="POST" action="/login">
+            <div class="form-group">
+                <label class="form-label" for="identifier">Username or email</label>
+                <input class="form-input" type="text" id="identifier" name="identifier"
+                    autocomplete="username" required>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <input class="form-input" type="password" id="password" name="password"
+                    autocomplete="current-password" required>
+            </div>
+
+            <div class="form-actions">
+                <button class="btn btn-primary" type="submit">Sign in</button>
+            </div>
+        </form>
+
+        <p class="auth-alt">
+            New here? <a href="/register">Create an account</a>
+        </p>
+    </div>
+</section>
+
+<%- include('./partials/footer') %>
