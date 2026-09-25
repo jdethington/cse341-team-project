@@ -80,7 +80,7 @@ export async function updateUserById(req, res, next) {
 // API: Deletes a user by ID
 // - Admins can delete any user
 // - Regular users can only delete themselves   
-export async function deleteUserById(req, res, next) {
+export async function deleteUser(req, res, next) {
     try {
         const currentUser = req.user;
         const targetId = req.params.id;
