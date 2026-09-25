@@ -12,8 +12,8 @@ export async function updateUser(id, updates) {
     return User.findByIdAndUpdate(
         id,
         { $set: allowedUpdates },
-        { new: true, runValidators: true }
-    ).populate("role").lean();
+        { returnDocument: 'after', runValidators: true } // returnDocument: 'after' returns the updated document, runValidators ensures schema validation even though this is an update
+    ).populate("role").lean();             // populate gets the role from the Role collection instead of just the ObjectId
 }
 
 // delete a user by their ID 

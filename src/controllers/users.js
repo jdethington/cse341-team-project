@@ -19,11 +19,12 @@ export const userAdminPage = async (req, res, next) => {
             users = await getAllUsers();
         } else {
             const user = await getUserById(currentUser.id);
-            users = user ? [user] : [];
+            users = user ? [user] : [];      // wrap user in an array [user] so that the EJS template can iterate over it
         }
 
+        // return to be used by the EJS template
         return res.render("users/admin", {
-            title: "User Administation",
+            title: "User Administration",
             users,
             currentUser
         });
