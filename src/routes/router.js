@@ -6,6 +6,7 @@ import { trainsPage, getTrainById, getAllTrains } from "./trains.js";
 import { Router } from "express";
 import { homePage, aboutPage, testErrorPage } from "./index.js";
 import { renderTripDetails } from "../controllers/trips.js";
+import tripRoutes from "./tripRoutes.js";
 
 const router = Router();
 
@@ -23,6 +24,8 @@ router.use("/", adminRouter);
 
 // Auth foundation routes (session + role guards)
 router.use("/", authRouter);
+
+router.use("/", tripRoutes);
 
 // Trains API
 router.get("/api/trains", getAllTrains);

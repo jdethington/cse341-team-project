@@ -4,3 +4,4 @@ src/models/db-in-file.json
 github_issue1_getAllTrips.md
 github_issue2_getTripById.md
 .vscode/
+github_issue_set5_protected_trip_admin_page.md
