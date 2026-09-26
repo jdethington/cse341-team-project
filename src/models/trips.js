@@ -23,3 +23,25 @@ export async function getTripById(id) {
         throw new Error(`Failed to fetch trip with id ${id}: ${error.message}`);
     }
 }
+
+// Update a trip by its MongoDB _id
+export async function updateTrip(id, tripData) {
+    try {
+        return await Trip.findOneAndUpdate(
+            { id },
+            { $set: tripData },
+            { returnDocument: 'after', runValidators: true }
+        ).lean();
+    } catch (error) {
+        throw new Error(`Failed to update trip with id ${id}: ${error.message}`);
+    }
+}
+
+// Delete a trip by its MongoDB _id
+export async function deleteTrip(id) {
+    try {
+        return await Trip.deleteOne({ id });
+    } catch (error) {
+        throw new Error(`Failed to delete trip with id ${id}: ${error.message}`);
+    }
+}

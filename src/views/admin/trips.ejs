@@ -1,0 +1,75 @@
+<%- include('../partials/header') %>
+
+<section class="trips-admin">
+    <div class="trips-admin-heading">
+        <h1>Trip Administration</h1>
+        <p>Manage railway trips, reassign stations or schedules, or remove outdated entries.</p>
+    </div>
+
+    <div id="edit-form-container" class="trips-edit-form" hidden>
+        <h2>Edit Trip Details</h2>
+        <form id="trip-form">
+            <input type="hidden" id="trip-id">
+
+            <div class="form-group">
+                <label for="trip-name">Trip Name:</label>
+                <input type="text" id="trip-name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="startStation">Start Station:</label>
+                <select id="startStation" required>
+                    <% stations.forEach(station => { %>
+                        <option value="<%= station.id %>"><%= station.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="endStation">End Station:</label>
+                <select id="endStation" required>
+                    <% stations.forEach(station => { %>
+                        <option value="<%= station.id %>"><%= station.name %></option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="scheduleId">Schedule:</label>
+                <select id="scheduleId">
+                    <option value="">No schedule change</option>
+                    <% schedules.forEach(schedule => { %>
+                        <option value="<%= schedule.id %>">
+                            <%= schedule.departureTime %> - <%= schedule.arrivalTime %> (Trip: <%= schedule.tripId %>)
+                        </option>
+                    <% }) %>
+                </select>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn">Save Changes</button>
+                <button type="button" id="cancel-edit" class="btn">Cancel</button>
+            </div>
+        </form>
+    </div>
+
+    <table class="trips-admin-table">
+        <thead>
+            <tr>
+                <th>Trip Name</th>
+                <th>Start Station</th>
+                <th>End Station</th>
+                <th>Schedules</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody id="trip-table-body"></tbody>
+    </table>
+</section>
+
+<script type="application/json" id="admin-trips-data">
+    <%- JSON.stringify({ stations, schedules }).replace(/</g, '\\u003c').replace(/>/g, '\\u003e').replace(/&/g, '\\u0026').replace(/\u2028/g, '\\u2028').replace(/\u2029/g, '\\u2029') %>
+</script>
+<script src="/js/trip-admin.js"></script>
+
+<%- include('../partials/footer') %>

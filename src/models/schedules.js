@@ -28,3 +28,39 @@ export async function getSchedulesByTripId(tripId, month) {
 export async function getAllSchedules() {
     return Schedule.find({}).lean();
 }
+
+
+// Helper function to create a query for finding a schedule by its id
+const getScheduleIdQuery = (id) => {
+    const value = String(id).trim();
+    const numericValue = Number(value);
+    const ids = [value];
+
+    if (Number.isInteger(numericValue) && String(numericValue) === value) {
+        ids.push(numericValue);
+    }
+
+    if (ids.length === 1) {
+        return { id: value };
+    }
+
+    return { $or: ids.map((scheduleId) => ({ id: scheduleId })) };
+};
+
+export async function getScheduleById(id) {
+    return Schedule.collection.findOne(getScheduleIdQuery(id));
+}
+
+export async function assignScheduleToTrip(scheduleId, tripId) {
+    const query = getScheduleIdQuery(scheduleId);
+    const result = await Schedule.collection.updateOne(
+        query,
+        { $set: { tripId: String(tripId) } }
+    );
+
+    if (!result.matchedCount) {
+        return null;
+    }
+
+    return Schedule.collection.findOne(query);
+}
