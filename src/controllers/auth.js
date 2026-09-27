@@ -31,14 +31,23 @@ export const accountAdminPage = (req, res) => {
     return res.render("account", { title: "Account (admin)", user: req.user });
 };
 
+// Renders the standard user dashboard (guarded by requirePageLogin).
+export const userDashboard = (req, res) => {
+    return res.render("dashboard", {
+        title: "Dashboard",
+        user: req.user,
+    });
+};
+
 // Stores the signed-in user in the session (display fields + role only — never the hash).
 const signIn = (req, user) => {
-    req.session.user = {
-        id: user._id.toString(),
-        name: user.name,
-        username: user.username,
-        role: user.role.name,
-    };
+  req.session.user = {
+    id: user._id.toString(),
+    name: user.name,
+    username: user.username,
+    email: user.email,
+    role: user.role.name,
+  };
 };
 
 // Re-renders the registration form with a validation error (the error is
@@ -136,7 +145,9 @@ export async function processLogin(req, res, next) {
 
         signIn(req, user);
 
-        return res.redirect(user.role.name === "admin" ? "/admin/dashboard" : "/");
+        return res.redirect(
+          user.role.name === "admin" ? "/admin/dashboard" : "/dashboard",
+        );
     } catch (error) {
         return next(error);
     }

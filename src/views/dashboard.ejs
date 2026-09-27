@@ -1,0 +1,54 @@
+<%- include('./partials/header') %>
+
+<section class="dashboard-hero">
+    <h1>Welcome, <%= user.name %></h1>
+    <p>You are signed in as <strong><%= user.username %></strong> with the <strong><%= user.role %></strong> role.</p>
+</section>
+
+<section class="dashboard-links">
+    <h2>Manage</h2>
+    <ul>
+        <li><a href="/bookings-admin">Bookings Admin</a></li>
+        <li><a href="/admin/users">User Admin</a></li>
+    </ul>
+</section>
+
+<section class="dashboard-bookings">
+    <h2>My Bookings</h2>
+    <div class="bookings-state" id="my-bookings-loading">Loading your bookings...</div>
+    <div class="bookings-state bookings-error" id="my-bookings-error" hidden></div>
+    <div class="bookings-state" id="my-bookings-empty" hidden>You don't have any bookings yet.</div>
+    <div class="bookings-grid" id="my-bookings-list"></div>
+
+    <template id="my-booking-card-template">
+        <article class="booking-card">
+            <header class="booking-card-header">
+                <h2>Booking <span data-field="id"></span></h2>
+            </header>
+            <dl class="booking-details">
+                <div class="booking-detail">
+                    <dt>Created</dt>
+                    <dd data-field="created-at"></dd>
+                </div>
+                <div class="booking-detail">
+                    <dt>Trip ID</dt>
+                    <dd data-field="trip-id"></dd>
+                </div>
+                <div class="booking-detail">
+                    <dt>Ticket Class</dt>
+                    <dd data-field="ticket-class"></dd>
+                </div>
+                <div class="booking-detail">
+                    <dt>Selected Day</dt>
+                    <dd data-field="selected-day"></dd>
+                </div>
+            </dl>
+            <section class="booking-passengers">
+                <h3>Passengers</h3>
+                <ul data-field="passengers"></ul>
+            </section>
+        </article>
+    </template>
+</section>
+
+<%- include('./partials/footer') %>
