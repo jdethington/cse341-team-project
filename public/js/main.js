@@ -238,10 +238,92 @@ const hookBookingsCatalog = async () => {
   }
 };
 
+const hookMyBookings = async () => {
+  const listEl = document.getElementById("my-bookings-list");
+  const templateEl = document.getElementById("my-booking-card-template");
+  const loadingEl = document.getElementById("my-bookings-loading");
+  const errorEl = document.getElementById("my-bookings-error");
+  const emptyEl = document.getElementById("my-bookings-empty");
+
+  if (!listEl || !templateEl) {
+    return;
+  }
+
+  try {
+    const response = await fetch("/api/bookings/me");
+
+    if (!response.ok) {
+      throw new Error(`Failed to load bookings (${response.status})`);
+    }
+
+    const payload = await response.json();
+    const bookings = payload.bookings || [];
+    const fragment = document.createDocumentFragment();
+
+    if (bookings.length === 0) {
+      if (loadingEl) {
+        loadingEl.hidden = true;
+      }
+      if (emptyEl) {
+        emptyEl.hidden = false;
+      }
+      return;
+    }
+
+    bookings.forEach((booking) => {
+      const card = templateEl.content.cloneNode(true);
+
+      card.querySelector('[data-field="id"]').textContent = booking.id;
+      card.querySelector('[data-field="created-at"]').textContent =
+        booking.createdAt;
+      card.querySelector('[data-field="trip-id"]').textContent = booking.tripId;
+      card.querySelector('[data-field="ticket-class"]').textContent =
+        booking.ticketClass;
+      card.querySelector('[data-field="selected-day"]').textContent =
+        booking.selectedDay;
+
+      const passengersEl = card.querySelector('[data-field="passengers"]');
+      const passengers = Array.isArray(booking.passengers)
+        ? booking.passengers
+        : Object.values(booking.passengers || {});
+      passengers.forEach((passenger) => {
+        const passengerEl = document.createElement("li");
+
+        passengerEl.textContent =
+          `${passenger.firstName} ${passenger.lastName} — ` +
+          `${passenger.email} — ${passenger.phone}`;
+
+        passengersEl.appendChild(passengerEl);
+      });
+
+      fragment.appendChild(card);
+    });
+
+    listEl.replaceChildren(fragment);
+
+    if (loadingEl) {
+      loadingEl.hidden = true;
+    }
+  } catch (error) {
+    console.error("Error loading user's bookings:", error);
+
+    if (loadingEl) {
+      loadingEl.hidden = true;
+    }
+
+    if (errorEl) {
+      errorEl.hidden = false;
+      errorEl.textContent =
+        "Unable to load your bookings right now. Please try again in a moment.";
+    }
+  }
+};
+
 document.addEventListener("DOMContentLoaded", () => {
   hookRegionSorter();
   hookSeasonSorter();
   hookTrainsCatalog();
   hookStationDetails();
   hookBookingsCatalog();
+  hookMyBookings();
 });

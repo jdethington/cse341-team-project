@@ -5,16 +5,17 @@
 // who is signed in.
 import { Router } from "express";
 import {
-    getSessionUser,
-    adminApiAccess,
-    accountPage,
-    accountAdminPage,
-    registerPage,
-    processRegistration,
-    loginPage,
-    processLogin,
-    processLogout,
-    adminDashboard,
+  getSessionUser,
+  adminApiAccess,
+  accountPage,
+  accountAdminPage,
+  registerPage,
+  processRegistration,
+  loginPage,
+  processLogin,
+  processLogout,
+  adminDashboard,
+  userDashboard,
 } from "../controllers/auth.js";
 import {
     requireApiLogin,
@@ -39,6 +40,8 @@ router.post("/logout", requirePageLogin, processLogout);
 // Admin dashboard (signed in + admin role)
 router.get("/admin/dashboard", requirePageLogin, requirePageRole("admin"), adminDashboard);
 
+// User dashboard (signed in)
+router.get("/dashboard", requirePageLogin, userDashboard);
 // Page routes (EJS responses for the browser)
 router.get("/account", requirePageLogin, accountPage);
 router.get("/account-admin", requirePageRole("admin"), accountAdminPage);
