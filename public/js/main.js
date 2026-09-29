@@ -153,42 +153,48 @@ const hookStationDetails = () => {
   });
 };
 
-const hookBookingsCatalog = async () => {
+const hookBookingsCatalog = () => {
   const listEl = document.getElementById("bookings-list");
-  const templateEl = document.getElementById("booking-card-template");
+  const cardTemplate = document.getElementById("booking-card-template");
+  const editTemplate = document.getElementById("booking-edit-template");
   const loadingEl = document.getElementById("bookings-loading");
   const errorEl = document.getElementById("bookings-error");
   const emptyEl = document.getElementById("bookings-empty");
+  const messageEl = document.getElementById("bookings-message");
 
-  if (!listEl || !templateEl) {
+  if (!listEl || !cardTemplate) {
     return;
   }
 
-  try {
-    const response = await fetch("/api/bookings");
+  let bookingsById = new Map();
 
-    if (!response.ok) {
-      throw new Error(`Failed to load bookings (${response.status})`);
+  const setMessage = (text) => {
+    if (!messageEl) return;
+    if (!text) {
+      messageEl.hidden = true;
+      messageEl.textContent = "";
+      return;
     }
+    messageEl.hidden = false;
+    messageEl.textContent = text;
+  };
 
-    const payload = await response.json();
-    const bookings = payload.bookings || [];
-    const fragment = document.createDocumentFragment();
+  const renderBookings = () => {
+    if (loadingEl) loadingEl.hidden = true;
 
-    if (bookings.length === 0) {
-      if (loadingEl) {
-        loadingEl.hidden = true;
-      }
-
-      if (emptyEl) {
-        emptyEl.hidden = false;
-      }
-
+    if (bookingsById.size === 0) {
+      listEl.replaceChildren();
+      if (emptyEl) emptyEl.hidden = false;
       return;
     }
 
-    bookings.forEach((booking) => {
-      const card = templateEl.content.cloneNode(true);
+    if (emptyEl) emptyEl.hidden = true;
+    const fragment = document.createDocumentFragment();
+
+    for (const booking of bookingsById.values()) {
+      const card = cardTemplate.content.cloneNode(true);
+      const article = card.querySelector("[data-booking-id]");
+      article.dataset.bookingId = booking.id;
 
       card.querySelector('[data-field="id"]').textContent = booking.id;
       card.querySelector('[data-field="created-at"]').textContent =
@@ -206,36 +212,189 @@ const hookBookingsCatalog = async () => {
         ? booking.passengers
         : Object.values(booking.passengers || {});
       passengers.forEach((passenger) => {
-        const passengerEl = document.createElement("li");
-
-        passengerEl.textContent =
+        const li = document.createElement("li");
+        li.textContent =
           `${passenger.firstName} ${passenger.lastName} — ` +
           `${passenger.email} — ${passenger.phone}`;
-
-        passengersEl.appendChild(passengerEl);
+        passengersEl.appendChild(li);
       });
 
       fragment.appendChild(card);
-    });
+    }
 
     listEl.replaceChildren(fragment);
+  };
 
-    if (loadingEl) {
-      loadingEl.hidden = true;
+  const loadBookings = async () => {
+    if (loadingEl) loadingEl.hidden = false;
+    if (errorEl) errorEl.hidden = true;
+    if (emptyEl) emptyEl.hidden = true;
+    setMessage("");
+
+    try {
+      const response = await fetch("/api/bookings", {
+        credentials: "same-origin",
+      });
+
+      if (response.status === 401) {
+        window.location.href = "/login";
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(`Failed to load bookings (${response.status})`);
+      }
+
+      const payload = await response.json();
+      const bookings = payload.bookings || [];
+      bookingsById = new Map(bookings.map((b) => [b.id, b]));
+      renderBookings();
+    } catch (error) {
+      console.error("Error loading bookings:", error);
+      if (loadingEl) loadingEl.hidden = true;
+      if (errorEl) {
+        errorEl.hidden = false;
+        errorEl.textContent =
+          "Unable to load bookings right now. Please try again in a moment.";
+      }
     }
-  } catch (error) {
-    console.error("Error loading bookings:", error);
+  };
 
-    if (loadingEl) {
-      loadingEl.hidden = true;
-    }
+  const showEditor = (card, booking) => {
+    if (!editTemplate) return;
 
-    if (errorEl) {
-      errorEl.hidden = false;
-      errorEl.textContent =
-        "Unable to load bookings right now. Please try again in a moment.";
+    const editor = editTemplate.content.cloneNode(true);
+    const form = editor.querySelector("form");
+    form.dataset.bookingId = booking.id;
+    form.elements.scheduleId.value = booking.scheduleId || "";
+    form.elements.tripId.value = booking.tripId || "";
+    form.elements.ticketClass.value = booking.ticketClass || "";
+    form.elements.selectedDay.value = booking.selectedDay || "";
+    form.addEventListener("submit", saveBooking);
+    card.replaceWith(editor);
+    form.elements.scheduleId.focus();
+  };
+
+  async function saveBooking(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const bookingId = form.dataset.bookingId;
+    const existing = bookingsById.get(bookingId) || {};
+
+    const body = {
+      scheduleId: form.elements.scheduleId.value.trim(),
+      tripId: form.elements.tripId.value.trim(),
+      ticketClass: form.elements.ticketClass.value.trim(),
+      selectedDay: form.elements.selectedDay.value.trim(),
+      passengers: existing.passengers,
+      createdAt: existing.createdAt,
+    };
+
+    try {
+      const response = await fetch(
+        `/api/bookings/${encodeURIComponent(bookingId)}`,
+        {
+          method: "PUT",
+          credentials: "same-origin",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        },
+      );
+
+      if (response.status === 401) {
+        window.location.href = "/login";
+        return;
+      }
+
+      if (!response.ok) {
+        let err = {};
+        try {
+          err = await response.json();
+        } catch {
+          // body was empty or not JSON
+        }
+        setMessage(
+          err.message ||
+            `The booking could not be updated (${response.status})`,
+        );
+        return;
+      }
+
+      const payload = await response.json();
+      bookingsById.set(payload.booking.id, payload.booking);
+      renderBookings();
+      setMessage(`Booking ${payload.booking.id} was updated.`);
+    } catch (error) {
+      console.error(error);
+      setMessage("The booking could not be updated.");
     }
   }
+
+  async function deleteBooking(booking) {
+    if (!window.confirm(`Delete booking ${booking.id}?`)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/bookings/${encodeURIComponent(booking.id)}`,
+        {
+          method: "DELETE",
+          credentials: "same-origin",
+        },
+      );
+
+      if (response.status === 401) {
+        window.location.href = "/login";
+        return;
+      }
+
+      if (!response.ok) {
+        let err = {};
+        try {
+          err = await response.json();
+        } catch {
+          // body was empty or not JSON
+        }
+        setMessage(
+          err.message ||
+            `The booking could not be deleted (${response.status})`,
+        );
+        return;
+      }
+
+      bookingsById.delete(booking.id);
+      renderBookings();
+      setMessage(`Booking ${booking.id} was deleted.`);
+    } catch (error) {
+      console.error(error);
+      setMessage("The booking could not be deleted.");
+    }
+  }
+
+  listEl.addEventListener("click", async (event) => {
+    const button = event.target.closest("button[data-action]");
+    if (!button) return;
+
+    if (button.dataset.action === "cancel") {
+      renderBookings();
+      return;
+    }
+
+    const card = button.closest("[data-booking-id]");
+    if (!card) return;
+    const booking = bookingsById.get(card.dataset.bookingId);
+    if (!booking) return;
+
+    if (button.dataset.action === "edit") {
+      showEditor(card, booking);
+    }
+    if (button.dataset.action === "delete") {
+      await deleteBooking(booking);
+    }
+  });
+
+  loadBookings();
 };
 
 const hookMyBookings = async () => {
