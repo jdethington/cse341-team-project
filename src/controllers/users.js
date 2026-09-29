@@ -14,8 +14,9 @@ export const userAdminPage = async (req, res, next) => {
         const currentUser = req.user;
         let users;
 
+        console.log('Current user role:', currentUser.role);
         // authorization check - if admin, get all users; if regular user, get only themselves
-        if (currentUser.role !== "admin") {
+        if (currentUser.role === "admin") {
             users = await getAllUsers();
         } else {
             const user = await getUserById(currentUser.id);
