@@ -13,8 +13,39 @@ const getBookingById = async (id) => {
   return Booking.findOne({ id }).lean();
 };
 
-const getBookingsByUserEmail = (email) => {
-  return Booking.find({ "passengers.email": email }).lean();
+const getBookingsByUserEmail = async (email) => {
+  const normalizedEmail = String(email || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // Escape special regex characters
+  return Booking.find({
+    "passengers.email": { $regex: new RegExp(`^${normalizedEmail}$`, "i") },
+  }).lean();
 };
 
-export { createBooking, getAllBookings, getBookingById, getBookingsByUserEmail, };
+const updateBooking = async (id, updates) => {
+  const { id: _ignoreId, _id, ...safeUpdates } = updates;
+
+  if (safeUpdates.passengers && !Array.isArray(safeUpdates.passengers)) {
+    safeUpdates.passengers = Object.values(safeUpdates.passengers);
+  }
+
+  return Booking.findOneAndUpdate(
+    { id },
+    { $set: safeUpdates },
+    { returnDocument: "after", runValidators: true },
+  ).lean();
+};
+
+const deleteBooking = async (id) => {
+  return Booking.findOneAndDelete({ id }).lean();
+};
+
+export {
+  createBooking,
+  getAllBookings,
+  getBookingById,
+  getBookingsByUserEmail,
+  updateBooking,
+  deleteBooking,
+};
