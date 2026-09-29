@@ -13,7 +13,7 @@ const getBookingById = async (id) => {
   return Booking.findOne({ id }).lean();
 };
 
-const getBookingsByPassengerEmail = async (email) => {
+const getBookingsByUserEmail = async (email) => {
   const normalizedEmail = String(email || "")
     .trim()
     .toLowerCase()
@@ -45,7 +45,7 @@ export {
   createBooking,
   getAllBookings,
   getBookingById,
-  getBookingsByPassengerEmail,
+  getBookingsByUserEmail,
   updateBooking,
   deleteBooking,
 };

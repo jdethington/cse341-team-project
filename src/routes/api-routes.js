@@ -382,7 +382,6 @@ router.get("/api/trips", getAllTrips);
 router.get("/api/trips/:id", getTripById);
 
 // /api/bookings
-
 /**
  * @openapi
  * /api/bookings:
@@ -405,7 +404,7 @@ router.get("/api/trips/:id", getTripById);
  *                   items:
  *                     $ref: '#/components/schemas/Booking'
  *       401:
- *         description: Authentication required to access bookings
+ *         description: Authentication required
  *       500:
  *         description: Unable to retrieve bookings
  */

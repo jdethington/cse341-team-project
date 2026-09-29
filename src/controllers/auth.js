@@ -186,7 +186,9 @@ export async function processLogin(req, res, next) {
 
     signIn(req, user);
 
-    return res.redirect(user.role.name === "admin" ? "/admin/dashboard" : "/");
+    return res.redirect(
+      user.role.name === "admin" ? "/admin/dashboard" : "/dashboard",
+    );
   } catch (error) {
     return next(error);
   }

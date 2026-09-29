@@ -2,7 +2,7 @@ import {
   createBooking as createNewBooking,
   getAllBookings as findAllBookings,
   getBookingById as findBookingById,
-  getBookingsByPassengerEmail,
+  getBookingsByUserEmail as findBookingsByUserEmail,
   updateBooking as updateBookingRecord,
   deleteBooking as deleteBookingRecord,
 } from "../models/bookings.js";
@@ -74,7 +74,7 @@ export async function getAllBookings(req, res) {
     if (userIsAdmin(req.user)) {
       bookings = await findAllBookings();
     } else {
-      bookings = await getBookingsByPassengerEmail(req.user.email);
+      bookings = await findBookingsByUserEmail(req.user.email);
     }
     return res.status(200).json({ bookings });
   } catch (error) {
