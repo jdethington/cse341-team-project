@@ -5,13 +5,29 @@ import {
 } from "../controllers/ticket-classes.js";
 import { getAllStations, getStationById } from "../controllers/stations.js";
 import { getAllTrips, getTripById } from "../controllers/trips.js";
-import { getAllBookings } from "../controllers/bookings.js";
+import {
+  getAllBookings,
+  updateBooking,
+  deleteBooking,
+} from "../controllers/bookings.js";
 import {
   getAllSchedules,
   getSchedulesForTrip,
 } from "../controllers/schedules.js";
+import { requireApiLogin } from "../middleware/auth.js";
 
 const router = Router();
+
+/**
+ * @openapi
+ * components:
+ *   securitySchemes:
+ *     sessionCookie:
+ *       type: apiKey
+ *       in: cookie
+ *       name: connect.sid
+ *       description: Express session cookie set after POST /login
+ */
 
 // /api/ticket-classes
 /**
@@ -366,6 +382,7 @@ router.get("/api/trips", getAllTrips);
 router.get("/api/trips/:id", getTripById);
 
 // /api/bookings
+
 /**
  * @openapi
  * /api/bookings:
@@ -373,6 +390,8 @@ router.get("/api/trips/:id", getTripById);
  *     summary: List bookings
  *     tags:
  *       - Bookings
+ *     security:
+ *       - sessionCookie: []
  *     responses:
  *       200:
  *         description: Bookings retrieved successfully
@@ -385,10 +404,66 @@ router.get("/api/trips/:id", getTripById);
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Booking'
+ *       401:
+ *         description: Authentication required to access bookings
  *       500:
  *         description: Unable to retrieve bookings
  */
-router.get("/api/bookings", getAllBookings);
+router.get("/api/bookings", requireApiLogin, getAllBookings);
+
+/**
+ * @openapi
+ * /api/bookings/{id}:
+ *   put:
+ *     summary: Update a booking
+ *     tags:
+ *       - Bookings
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     security:
+ *       - sessionCookie: []
+ *     responses:
+ *       200:
+ *         description: Booking updated
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ */
+router.put("/api/bookings/:id", requireApiLogin, updateBooking);
+
+/**
+ * @openapi
+ * /api/bookings/{id}:
+ *   delete:
+ *     summary: Delete a booking
+ *     tags:
+ *       - Bookings
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *     security:
+ *       - sessionCookie: []
+ *     responses:
+ *       200:
+ *         description: Booking deleted
+ *       401:
+ *         description: Authentication required
+ *       403:
+ *         description: Forbidden
+ *       404:
+ *         description: Not found
+ */
+router.delete("/api/bookings/:id", requireApiLogin, deleteBooking);
 
 // Schedules API
 /**

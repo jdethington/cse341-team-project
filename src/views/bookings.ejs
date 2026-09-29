@@ -3,30 +3,23 @@
     <section class="bookings-hero">
         <h1>Bookings Administration</h1>
         <p>
-            View bookings currently stored in the Kizuna Rail system.
+            Admins see all bookings. Other signed-in users see bookings where they are a passenger.
+            Edit or delete updates the list through the API without reloading the page.
         </p>
     </section>
 
     <section class="bookings-catalog">
-        <div class="bookings-state" id="bookings-loading">
-            Loading bookings...
-        </div>
+        <p id="bookings-message" class="bookings-message" hidden></p>
 
+        <div class="bookings-state" id="bookings-loading">Loading bookings...</div>
         <div class="bookings-state bookings-error" id="bookings-error" hidden></div>
-
-        <div class="bookings-state" id="bookings-empty" hidden>
-            No bookings were found.
-        </div>
-
+        <div class="bookings-state" id="bookings-empty" hidden>No bookings were found.</div>
         <div class="bookings-grid" id="bookings-list"></div>
 
         <template id="booking-card-template">
-            <article class="booking-card">
+            <article class="booking-card" data-booking-id="">
                 <header class="booking-card-header">
-                    <h2>
-                        Booking
-                        <span data-field="id"></span>
-                    </h2>
+                    <h2>Booking <span data-field="id"></span></h2>
                 </header>
 
                 <dl class="booking-details">
@@ -34,22 +27,18 @@
                         <dt>Created</dt>
                         <dd data-field="created-at"></dd>
                     </div>
-
                     <div class="booking-detail">
                         <dt>Schedule ID</dt>
                         <dd data-field="schedule-id"></dd>
                     </div>
-
                     <div class="booking-detail">
                         <dt>Trip ID</dt>
                         <dd data-field="trip-id"></dd>
                     </div>
-
                     <div class="booking-detail">
                         <dt>Ticket Class</dt>
                         <dd data-field="ticket-class"></dd>
                     </div>
-
                     <div class="booking-detail">
                         <dt>Selected Day</dt>
                         <dd data-field="selected-day"></dd>
@@ -60,7 +49,37 @@
                     <h3>Passengers</h3>
                     <ul data-field="passengers"></ul>
                 </section>
+
+                <div class="booking-actions">
+                    <button type="button" data-action="edit">Edit</button>
+                    <button type="button" data-action="delete">Delete</button>
+                </div>
             </article>
+        </template>
+
+        <template id="booking-edit-template">
+            <form class="booking-edit-form" data-booking-id="">
+                <label>
+                    Schedule ID
+                    <input name="scheduleId" required>
+                </label>
+                <label>
+                    Trip ID
+                    <input name="tripId" required>
+                </label>
+                <label>
+                    Ticket Class
+                    <input name="ticketClass" required>
+                </label>
+                <label>
+                    Selected Day
+                    <input name="selectedDay" required>
+                </label>
+                <div class="booking-actions">
+                    <button type="submit">Save</button>
+                    <button type="button" data-action="cancel">Cancel</button>
+                </div>
+            </form>
         </template>
     </section>
 

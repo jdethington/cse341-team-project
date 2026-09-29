@@ -302,6 +302,11 @@
         "tags": [
           "Bookings"
         ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Bookings retrieved successfully",
@@ -321,8 +326,83 @@
               }
             }
           },
+          "401": {
+            "description": "Authentication required to access bookings"
+          },
           "500": {
             "description": "Unable to retrieve bookings"
+          }
+        }
+      }
+    },
+    "/api/bookings/{id}": {
+      "put": {
+        "summary": "Update a booking",
+        "tags": [
+          "Bookings"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Booking updated"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a booking",
+        "tags": [
+          "Bookings"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "sessionCookie": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Booking deleted"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Not found"
           }
         }
       }
@@ -409,6 +489,14 @@
     }
   },
   "components": {
+    "securitySchemes": {
+      "sessionCookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "connect.sid",
+        "description": "Express session cookie set after POST /login"
+      }
+    },
     "schemas": {
       "Station": {
         "type": "object",

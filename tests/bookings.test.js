@@ -3,9 +3,21 @@ import request from "supertest";
 import app from "../app.js";
 import { getDb } from "../src/db/connect.js";
 
+async function loginAs(identifier, password) {
+  const agent = request.agent(app);
+  await agent.post("/login").type("form").send({ identifier, password });
+  return agent;
+}
+
 describe("GET /api/bookings", () => {
-  test("returns a successful JSON response", async () => {
+  test("returns 401 when not authenticated", async () => {
     const response = await request(app).get("/api/bookings");
+    expect(response.status).toBe(401);
+  });
+
+  test("returns a successful JSON response for an admin", async () => {
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent.get("/api/bookings");
 
     expect(response.status).toBe(200);
     expect(response.headers["content-type"]).toContain("application/json");
@@ -13,7 +25,7 @@ describe("GET /api/bookings", () => {
     expect(response.body.bookings).toBeInstanceOf(Array);
   });
 
-  test("returns a booking added to the test database", async () => {
+  test("returns a booking added to the test database for an admin", async () => {
     await getDb()
       .collection("bookings")
       .insertOne({
@@ -33,7 +45,8 @@ describe("GET /api/bookings", () => {
         ],
       });
 
-    const response = await request(app).get("/api/bookings");
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent.get("/api/bookings");
 
     expect(response.status).toBe(200);
     expect(response.body.bookings).toEqual(
@@ -48,9 +61,15 @@ describe("GET /api/bookings", () => {
 });
 
 describe("Bookings admin page", () => {
-  test("GET /bookings-admin renders the admin shell", async () => {
+  test("redirects to login when not authenticated", async () => {
     const response = await request(app).get("/bookings-admin");
+    expect(response.status).toBe(302);
+    expect(response.headers.location).toMatch(/login/i);
+  });
 
+  test("renders the admin shell when signed in", async () => {
+    const agent = await loginAs("customer", "customer1#");
+    const response = await agent.get("/bookings-admin");
     expect(response.status).toBe(200);
     expect(response.text).toContain("bookings-list");
   });
@@ -61,7 +80,6 @@ describe("Confirmation page", () => {
     const response = await request(app).get(
       "/trips/confirmation/DOES-NOT-EXIST",
     );
-
     expect(response.status).toBe(404);
   });
 });
