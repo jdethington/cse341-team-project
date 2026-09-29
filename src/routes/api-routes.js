@@ -7,6 +7,7 @@ import { getAllStations, getStationById } from "../controllers/stations.js";
 import { getAllTrips, getTripById } from "../controllers/trips.js";
 import {
   getAllBookings,
+  getMyBookings,
   updateBooking,
   deleteBooking,
 } from "../controllers/bookings.js";
@@ -409,6 +410,48 @@ router.get("/api/trips/:id", getTripById);
  *         description: Unable to retrieve bookings
  */
 router.get("/api/bookings", requireApiLogin, getAllBookings);
+
+/**
+ * @openapi
+ * /api/bookings/me:
+ *   get:
+ *     summary: List the signed-in user's bookings
+ *     tags:
+ *       - Bookings
+ *     security:
+ *       - sessionCookie: []
+ *     responses:
+ *       200:
+ *         description: The signed-in user's bookings
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 bookings:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Booking'
+ *       401:
+ *         description: Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *       500:
+ *         description: Unable to retrieve bookings
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ */
+router.get("/api/bookings/me", requireApiLogin, getMyBookings);
 
 /**
  * @openapi

@@ -140,6 +140,18 @@ export async function deleteBooking(req, res) {
   }
 }
 
+export async function getMyBookings(req, res) {
+  try {
+    const bookings = await findBookingsByUserEmail(req.user.email);
+
+    return res.status(200).json({ bookings });
+  } catch (error) {
+    console.error("Error fetching user's bookings:", error);
+
+    return res.status(500).json({ message: "Failed to fetch bookings" });
+  }
+}
+
 export async function bookingPage(req, res) {
   try {
     const { scheduleId } = req.params;

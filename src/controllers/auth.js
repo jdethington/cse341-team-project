@@ -31,6 +31,14 @@ export const accountAdminPage = (req, res) => {
   return res.render("account", { title: "Account (admin)", user: req.user });
 };
 
+// Renders the standard user dashboard (guarded by requirePageLogin).
+export const userDashboard = (req, res) => {
+    return res.render("dashboard", {
+        title: "Dashboard",
+        user: req.user,
+    });
+};
+
 // Stores the signed-in user in the session (display fields + role only — never the hash).
 const signIn = (req, user) => {
   req.session.user = {
