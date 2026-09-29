@@ -1,6 +1,7 @@
 import {
   createBooking as createNewBooking,
   getAllBookings as findAllBookings,
+  getBookingsByUserEmail as findBookingsByUserEmail,
 } from "../models/bookings.js";
 import { getAllTicketClasses } from "../models/ticket-classes.js";
 // import { getTripById } from "../models/trips.js"; // Uncomment this line when the getTripById function is implemented in the trips model
@@ -44,6 +45,18 @@ export async function getAllBookings(req, res) {
       title: "Server Error",
       error: "Failed to fetch bookings",
     });
+  }
+}
+
+export async function getMyBookings(req, res) {
+  try {
+    const bookings = await findBookingsByUserEmail(req.user.email);
+
+    return res.status(200).json({ bookings });
+  } catch (error) {
+    console.error("Error fetching user's bookings:", error);
+
+    return res.status(500).json({ message: "Failed to fetch bookings" });
   }
 }
 

@@ -13,4 +13,8 @@ const getBookingById = async (id) => {
   return Booking.findOne({ id }).lean();
 };
 
-export { createBooking, getAllBookings, getBookingById };
+const getBookingsByUserEmail = (email) => {
+  return Booking.find({ "passengers.email": email }).lean();
+};
+
+export { createBooking, getAllBookings, getBookingById, getBookingsByUserEmail, };

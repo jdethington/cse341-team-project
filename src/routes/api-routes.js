@@ -5,11 +5,12 @@ import {
 } from "../controllers/ticket-classes.js";
 import { getAllStations, getStationById } from "../controllers/stations.js";
 import { getAllTrips, getTripById } from "../controllers/trips.js";
-import { getAllBookings } from "../controllers/bookings.js";
+import { getAllBookings, getMyBookings } from "../controllers/bookings.js";
 import {
   getAllSchedules,
   getSchedulesForTrip,
 } from "../controllers/schedules.js";
+import { requireApiLogin } from "../middleware/auth.js";
 
 const router = Router();
 
@@ -365,17 +366,16 @@ router.get("/api/trips", getAllTrips);
  */
 router.get("/api/trips/:id", getTripById);
 
-// /api/bookings
 /**
  * @openapi
- * /api/bookings:
+ * /api/bookings/me:
  *   get:
- *     summary: List bookings
+ *     summary: List the signed-in user's bookings
  *     tags:
  *       - Bookings
  *     responses:
  *       200:
- *         description: Bookings retrieved successfully
+ *         description: The signed-in user's bookings
  *         content:
  *           application/json:
  *             schema:
@@ -385,9 +385,27 @@ router.get("/api/trips/:id", getTripById);
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Booking'
+ *       401:
+ *         description: Authentication required
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  *       500:
  *         description: Unable to retrieve bookings
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
  */
+router.get("/api/bookings/me", requireApiLogin, getMyBookings);
+
 router.get("/api/bookings", getAllBookings);
 
 // Schedules API
