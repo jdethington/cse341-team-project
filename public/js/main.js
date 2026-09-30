@@ -56,7 +56,18 @@ const loadTrainsCatalog = async () => {
   try {
     const response = await fetch(`/api/trains${search ? `?${search}` : ""}`);
     if (!response.ok) {
-      throw new Error(`Failed to load trains (${response.status})`);
+      let message = `Failed to load trains (${response.status})`;
+      try {
+        const body = await response.json();
+        if (body.error) {
+          message = body.error;
+        } else if (Array.isArray(body.errors) && body.errors.length > 0) {
+          message = body.errors.map((e) => e.message).join(" ");
+        }
+      } catch (parseError) {
+        // Keep the default message when the body is not JSON.
+      }
+      throw new Error(message);
     }
 
     const payload = await response.json();

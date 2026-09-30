@@ -821,6 +821,16 @@ router.delete("/api/users/:id", requireApiLogin, deleteUser);
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ValidationError'
+ *       404:
+ *         description: The requested page is past the last page
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Page 3 does not exist. The last page is 2.
  *       500:
  *         description: Failed to fetch trains
  *         content:

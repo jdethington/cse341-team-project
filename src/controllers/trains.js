@@ -82,13 +82,21 @@ export async function getAllTrains(req, res) {
             order: 1,
         });
 
+        const totalPages = Math.ceil(totalItems / limit);
+
+        if (page > totalPages) {
+            return res.status(404).json({
+                error: `Page ${page} does not exist. The last page is ${totalPages || 0}.`,
+            });
+        }
+
         return res.status(200).json({
             data: trains,
             pagination: {
                 page,
                 limit,
                 totalItems,
-                totalPages: Math.ceil(totalItems / limit),
+                totalPages,
                 hasNextPage: page * limit < totalItems,
                 hasPreviousPage: page > 1,
             },
