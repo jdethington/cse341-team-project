@@ -10,7 +10,6 @@ import { loadSessionUser } from './src/middleware/auth.js';
 import swaggerUi from 'swagger-ui-express';
 import swaggerDocument from './swagger.json' with { type: 'json' };
 
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = Path.dirname(__filename);
 

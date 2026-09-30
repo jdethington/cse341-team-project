@@ -1,4 +1,4 @@
-import { getAllTrips, getTripById, updateTrip, deleteTrip } from "../models/trips.js";
+import { getTripById, updateTrip, deleteTrip } from "../models/trips.js";
 import { getAllStations } from "../models/stations.js";
 import {
   getAllSchedules,
@@ -69,25 +69,21 @@ export async function getTripAdminPage(req, res) {
   }
 }
 
-// API: Get all trips
-export async function getAllTripsApi(req, res) {
-  try {
-    const trips = await getAllTrips();
-    return res.status(200).json({ trips });
-  } catch (err) {
-    console.error("Error fetching trips:", err);
-    return res.status(500).json({ error: "Failed to retrieve trips" });
-  }
-}
-
 // API: Update an existing trip by its string id
 export async function updateTripController(req, res) {
-    try {
-        const { id } = req.params;
-        const body = req.body ?? {};
-        const data = sanitizeTripData(body);
-        const scheduleId = sanitizeScheduleId(body.scheduleId);
+    const { id } = req.params;
+    const body = req.body ?? {};
 
+    let data;
+    let scheduleId;
+    try {
+        data = sanitizeTripData(body);
+        scheduleId = sanitizeScheduleId(body.scheduleId);
+    } catch (err) {
+        return res.status(400).json({ error: err.message });
+    }
+
+    try {
         if (Object.keys(data).length === 0 && scheduleId === undefined) {
             return res.status(400).json({ error: "No trip fields provided" });
         }
@@ -121,7 +117,7 @@ export async function updateTripController(req, res) {
         return res.status(200).json({ message: "Trip updated successfully", trip });
     } catch (err) {
         console.error("Error updating trip:", err);
-        return res.status(400).json({ error: err.message });
+        return res.status(500).json({ error: "Failed to update trip" });
     }
 }
 

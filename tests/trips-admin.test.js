@@ -10,6 +10,24 @@ const login = async (identifier, password) => {
     return agent;
 };
 
+const createTestTrip = async (id) => {
+    await getDb().collection("trips").insertOne({
+        id,
+        name: "Test Deletion Trip",
+        description: "Temporary trip created by the trip admin test suite.",
+        region: "central",
+        startStation: "nagoya",
+        endStation: "toyama",
+        duration: "1 hour",
+        distance: 10,
+        highlights: ["Test highlight"],
+        bestSeason: "spring",
+        operatingMonths: [4, 5, 6],
+        imageUrl: "/images/routes/test-trip-deletion.png"
+    });
+    return id;
+};
+
 describe("Trip admin page authorization", () => {
     test("redirects signed-out users to login", async () => {
         const response = await request(app).get("/admin/trips");
@@ -154,11 +172,16 @@ describe("Trip admin CRUD", () => {
 
     test("deletes a trip by its string id", async () => {
         const agent = await login("admin", "password1#");
-        const response = await agent.delete("/api/trips/alpine-panorama");
+        const tripId = await createTestTrip("test-trip-deletion");
+
+        const response = await agent.delete(`/api/trips/${tripId}`);
 
         expect(response.status).toBe(200);
-        const stored = await getDb().collection("trips").findOne({ id: "alpine-panorama" });
+        const stored = await getDb().collection("trips").findOne({ id: tripId });
         expect(stored).toBeNull();
+
+        const seeded = await getDb().collection("trips").findOne({ id: "alpine-panorama" });
+        expect(seeded).not.toBeNull();
     });
 
     test("returns 404 when deleting an unknown trip", async () => {
