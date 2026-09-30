@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const stations = Array.isArray(referenceData.stations) ? referenceData.stations : [];
-    const schedules = Array.isArray(referenceData.schedules) ? referenceData.schedules : [];
+    let schedules = Array.isArray(referenceData.schedules) ? referenceData.schedules : [];
     let trips = [];
 
     const stationName = (id) => {
@@ -36,6 +36,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const schedulesForTrip = (tripId) => {
         return schedules.filter((schedule) => String(schedule.tripId) === String(tripId));
+    };
+
+    const scheduleOptionLabel = (schedule) => {
+        const departure = schedule.departureTime || '?';
+        const arrival = schedule.arrivalTime || '?';
+        return `${departure} - ${arrival} (Trip: ${schedule.tripId})`;
+    };
+
+    const renderScheduleOptions = (items, selectedId) => {
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'No schedule change';
+        scheduleSelect.replaceChildren(placeholder);
+
+        items.forEach((schedule) => {
+            const option = document.createElement('option');
+            option.value = String(schedule.id);
+            option.textContent = scheduleOptionLabel(schedule);
+            scheduleSelect.appendChild(option);
+        });
+
+        scheduleSelect.value = selectedId || '';
+    };
+
+    const fetchSchedules = async () => {
+        try {
+            const response = await fetch('/api/schedules');
+            if (!response.ok) {
+                return null;
+            }
+            const data = await response.json();
+            return Array.isArray(data) ? data : (data.schedules || []);
+        } catch (error) {
+            console.error('Error fetching schedules:', error);
+            return null;
+        }
     };
 
     const getErrorMessage = async (response, fallback) => {
@@ -101,18 +137,28 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
-    const loadTrips = async () => {
+    const loadTrips = async (selectedScheduleId = '') => {
         try {
-            const response = await fetch('/api/trips');
-            if (response.status === 401) {
+            const [tripsResponse, freshSchedules] = await Promise.all([
+                fetch('/api/trips'),
+                fetchSchedules()
+            ]);
+
+            if (tripsResponse.status === 401) {
                 window.location.assign('/login');
                 return;
             }
-            if (!response.ok) {
+            if (!tripsResponse.ok) {
                 throw new Error('Failed to fetch trips');
             }
 
-            const data = await response.json();
+            const data = await tripsResponse.json();
+
+            if (Array.isArray(freshSchedules)) {
+                schedules = freshSchedules;
+                renderScheduleOptions(schedules, selectedScheduleId);
+            }
+
             renderTrips(Array.isArray(data) ? data : (data.trips || []));
         } catch (error) {
             console.error('Error fetching trips:', error);
@@ -207,10 +253,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
             }
 
+            const selectedScheduleId = scheduleSelect.value;
             tripForm.reset();
             scheduleSelect.value = '';
             editContainer.hidden = true;
-            await loadTrips();
+            await loadTrips(selectedScheduleId);
         } catch (error) {
             console.error('Update error:', error);
             alert('Failed to update trip.');
