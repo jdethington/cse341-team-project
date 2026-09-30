@@ -65,6 +65,13 @@ const trainSchema = new mongoose.Schema(
   },
 );
 
+trainSchema.index({
+    name: "text",
+    operator: "text",
+    type: "text",
+    description: "text",
+});
+
 const Train = mongoose.model("Train", trainSchema);
 
 export default Train;

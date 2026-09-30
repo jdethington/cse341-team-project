@@ -39,6 +39,7 @@ const loadTrainsCatalog = async () => {
   const templateEl = document.getElementById("train-card-template");
   const loadingEl = document.getElementById("trains-loading");
   const errorEl = document.getElementById("trains-error");
+  const emptyEl = document.getElementById("trains-empty");
   const pageInfoEl = document.getElementById("trains-page-info");
   const prevBtn = document.getElementById("trains-prev");
   const nextBtn = document.getElementById("trains-next");
@@ -108,24 +109,33 @@ const loadTrainsCatalog = async () => {
       errorEl.hidden = true;
     }
 
-    if (paginationEl) {
-      paginationEl.hidden = false;
-    }
-
     const pagination = payload.pagination || {};
     const totalPages = pagination.totalPages || 1;
     const currentPage = pagination.page || 1;
 
-    if (pageInfoEl) {
-      pageInfoEl.textContent = `Page ${currentPage} of ${totalPages}`;
+    const hasResults = trains.length > 0;
+
+    if (emptyEl) {
+      emptyEl.hidden = hasResults;
     }
 
-    if (prevBtn) {
-      prevBtn.disabled = currentPage <= 1;
+    const showPagination = hasResults;
+    if (paginationEl) {
+      paginationEl.hidden = !showPagination;
     }
 
-    if (nextBtn) {
-      nextBtn.disabled = !pagination.hasNextPage && currentPage >= totalPages;
+    if (showPagination) {
+      if (pageInfoEl) {
+        pageInfoEl.textContent = `Page ${currentPage} of ${totalPages}`;
+      }
+
+      if (prevBtn) {
+        prevBtn.disabled = currentPage <= 1;
+      }
+
+      if (nextBtn) {
+        nextBtn.disabled = !pagination.hasNextPage && currentPage >= totalPages;
+      }
     }
   } catch (error) {
     if (loadingEl) {
@@ -145,6 +155,75 @@ const goToTrainsPage = (page) => {
   const url = new URL(window.location.href);
   url.searchParams.set("page", String(page));
   window.location.href = url.toString();
+};
+
+// Update a single search/filter/sort parameter, drop the page number so the
+// user always lands on page 1 of the new result set, then reload.
+const applyTrainsParam = (name, value) => {
+  const url = new URL(window.location.href);
+
+  if (value === "" || value === null || value === undefined) {
+    url.searchParams.delete(name);
+  } else {
+    url.searchParams.set(name, value);
+  }
+
+  url.searchParams.delete("page");
+  window.location.href = url.toString();
+};
+
+// Reflect the current URL back into the toolbar controls so a shared/refreshed
+// link shows the filters that are actually applied.
+const syncTrainsControlsFromUrl = () => {
+  const params = new URLSearchParams(window.location.search);
+
+  const setIfPresent = (id, key) => {
+    const el = document.getElementById(id);
+    const value = params.get(key);
+    if (el && value !== null) {
+      el.value = value;
+    }
+  };
+
+  setIfPresent("trains-search", "q");
+  setIfPresent("trains-power", "powerSource");
+  setIfPresent("trains-sort", "sort");
+  setIfPresent("trains-order", "order");
+};
+
+const hookTrainsControls = () => {
+  const searchEl = document.getElementById("trains-search");
+  const powerEl = document.getElementById("trains-power");
+  const sortEl = document.getElementById("trains-sort");
+  const orderEl = document.getElementById("trains-order");
+
+  if (powerEl) {
+    powerEl.addEventListener("change", () => applyTrainsParam("powerSource", powerEl.value));
+  }
+
+  if (sortEl) {
+    sortEl.addEventListener("change", () => applyTrainsParam("sort", sortEl.value));
+  }
+
+  if (orderEl) {
+    orderEl.addEventListener("change", () => applyTrainsParam("order", orderEl.value));
+  }
+
+  if (searchEl) {
+    let debounceTimer = null;
+    const handleSearch = () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => applyTrainsParam("q", searchEl.value.trim()), 300);
+    };
+
+    searchEl.addEventListener("input", handleSearch);
+    searchEl.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") {
+        clearTimeout(debounceTimer);
+        applyTrainsParam("q", searchEl.value.trim());
+      }
+    });
+  }
 };
 
 const hookTrainsPagination = () => {
@@ -171,6 +250,8 @@ const hookTrainsPagination = () => {
 };
 
 const hookTrainsCatalog = () => {
+  syncTrainsControlsFromUrl();
+  hookTrainsControls();
   hookTrainsPagination();
   loadTrainsCatalog();
 };

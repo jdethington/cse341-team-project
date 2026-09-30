@@ -7,6 +7,19 @@ import {
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
+const MAX_SEARCH_LENGTH = 100;
+const ALLOWED_SORT_FIELDS = [
+    "name",
+    "operator",
+    "type",
+    "maxSpeedKmh",
+    "capacity",
+    "powerSource",
+    "createdAt",
+];
+const ALLOWED_POWER_SOURCES = ["Electric", "Diesel", "Steam"];
+const DEFAULT_SORT = "name";
+const DEFAULT_ORDER = "asc";
 
 const parsePositiveInteger = (value, defaultValue) => {
     if (value === undefined) {
@@ -20,6 +33,65 @@ const parsePositiveInteger = (value, defaultValue) => {
     }
 
     return parsed;
+};
+
+const parseSearchParams = (query) => {
+    const errors = [];
+    const filter = {};
+
+    if (query.q !== undefined) {
+        if (typeof query.q !== "string") {
+            errors.push({
+                field: "q",
+                message: "Search text must be a single string.",
+            });
+        } else {
+            const searchText = query.q.trim();
+
+            if (searchText.length < 1 || searchText.length > MAX_SEARCH_LENGTH) {
+                errors.push({
+                    field: "q",
+                    message: `Search text must be between 1 and ${MAX_SEARCH_LENGTH} characters.`,
+                });
+            } else {
+                filter.$text = { $search: searchText };
+            }
+        }
+    }
+
+    if (query.powerSource !== undefined) {
+        if (!ALLOWED_POWER_SOURCES.includes(query.powerSource)) {
+            errors.push({
+                field: "powerSource",
+                message: `powerSource must be one of: ${ALLOWED_POWER_SOURCES.join(", ")}.`,
+            });
+        } else {
+            filter.powerSource = query.powerSource;
+        }
+    }
+
+    const sort = query.sort !== undefined ? query.sort : DEFAULT_SORT;
+
+    if (!ALLOWED_SORT_FIELDS.includes(sort)) {
+        errors.push({
+            field: "sort",
+            message: `sort must be one of: ${ALLOWED_SORT_FIELDS.join(", ")}.`,
+        });
+    }
+
+    if (query.order !== undefined && query.order !== "asc" && query.order !== "desc") {
+        errors.push({
+            field: "order",
+            message: "order must be either asc or desc.",
+        });
+    }
+
+    return {
+        errors,
+        filter,
+        sort,
+        order: query.order === "desc" ? "desc" : DEFAULT_ORDER,
+    };
 };
 
 export async function getTrainById(req, res) {
@@ -70,28 +142,39 @@ export async function getAllTrains(req, res) {
             });
         }
 
+        const { errors: searchErrors, filter, sort, order } = parseSearchParams(req.query);
+        errors.push(...searchErrors);
+
         if (errors.length > 0) {
             return res.status(400).json({ errors });
         }
 
         const { trains, totalItems } = await findPaginatedTrains({
-            filter: {},
+            filter,
             page,
             limit,
-            sort: "name",
-            order: 1,
+            sort,
+            order: order === "desc" ? -1 : 1,
         });
 
         const totalPages = Math.ceil(totalItems / limit);
 
-        if (page > totalPages) {
+        // A no-match search is a valid empty result (200), not a missing page.
+        // Only 404 when results exist but the requested page is past the end.
+        if (totalItems > 0 && page > totalPages) {
             return res.status(404).json({
-                error: `Page ${page} does not exist. The last page is ${totalPages || 0}.`,
+                error: `Page ${page} does not exist. The last page is ${totalPages}.`,
             });
         }
 
         return res.status(200).json({
             data: trains,
+            query: {
+                sort,
+                order,
+                ...(filter.$text ? { q: filter.$text.$search } : {}),
+                ...(filter.powerSource ? { powerSource: filter.powerSource } : {}),
+            },
             pagination: {
                 page,
                 limit,
