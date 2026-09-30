@@ -2,7 +2,7 @@ import apiRoutes from "./api-routes.js";
 import railTripsRouter from "./trips.js";
 import adminRouter from "./admin.js";
 import authRouter from "./auth.js";
-import { trainsPage, getTrainById, getAllTrains } from "./trains.js";
+import { trainsPage } from "./trains.js";
 import { Router } from "express";
 import { homePage, aboutPage, testErrorPage } from "./index.js";
 import { renderTripDetails } from "../controllers/trips.js";
@@ -31,10 +31,6 @@ router.use("/", tripRoutes);
 
 // Users foundation routes (user admin page + API)
 router.use("/", usersRouter);
-
-// Trains API
-router.get("/api/trains", getAllTrains);
-router.get("/api/trains/:id", getTrainById);
 
 // Trip Details page (e.g., /trips/alpine-panorama)
 router.get("/trips/:id", renderTripDetails);

@@ -34,24 +34,33 @@ const hookSeasonSorter = () => {
   }
 };
 
-const hookTrainsCatalog = async () => {
+const loadTrainsCatalog = async () => {
   const listEl = document.getElementById("trains-list");
   const templateEl = document.getElementById("train-card-template");
   const loadingEl = document.getElementById("trains-loading");
   const errorEl = document.getElementById("trains-error");
+  const pageInfoEl = document.getElementById("trains-page-info");
+  const prevBtn = document.getElementById("trains-prev");
+  const nextBtn = document.getElementById("trains-next");
 
   if (!listEl || !templateEl) {
     return;
   }
 
+  if (loadingEl) {
+    loadingEl.hidden = false;
+  }
+
+  const search = window.location.search ? window.location.search.slice(1) : "";
+
   try {
-    const response = await fetch("/api/trains");
+    const response = await fetch(`/api/trains${search ? `?${search}` : ""}`);
     if (!response.ok) {
       throw new Error(`Failed to load trains (${response.status})`);
     }
 
     const payload = await response.json();
-    const trains = payload.trains || [];
+    const trains = payload.data || [];
     const fragment = document.createDocumentFragment();
 
     trains.forEach((train) => {
@@ -82,6 +91,26 @@ const hookTrainsCatalog = async () => {
     if (loadingEl) {
       loadingEl.hidden = true;
     }
+
+    if (errorEl) {
+      errorEl.hidden = true;
+    }
+
+    const pagination = payload.pagination || {};
+    const totalPages = pagination.totalPages || 1;
+    const currentPage = pagination.page || 1;
+
+    if (pageInfoEl) {
+      pageInfoEl.textContent = `Page ${currentPage} of ${totalPages}`;
+    }
+
+    if (prevBtn) {
+      prevBtn.disabled = currentPage <= 1;
+    }
+
+    if (nextBtn) {
+      nextBtn.disabled = !pagination.hasNextPage && currentPage >= totalPages;
+    }
   } catch (error) {
     if (loadingEl) {
       loadingEl.hidden = true;
@@ -92,6 +121,40 @@ const hookTrainsCatalog = async () => {
         "Unable to load trains right now. Please try again in a moment.";
     }
   }
+};
+
+const goToTrainsPage = (page) => {
+  const url = new URL(window.location.href);
+  url.searchParams.set("page", String(page));
+  window.location.href = url.toString();
+};
+
+const hookTrainsPagination = () => {
+  const prevBtn = document.getElementById("trains-prev");
+  const nextBtn = document.getElementById("trains-next");
+
+  if (prevBtn) {
+    prevBtn.addEventListener("click", () => {
+      const params = new URLSearchParams(window.location.search);
+      const page = Number(params.get("page") || "1") - 1;
+      if (page >= 1) {
+        goToTrainsPage(page);
+      }
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener("click", () => {
+      const params = new URLSearchParams(window.location.search);
+      const page = Number(params.get("page") || "1") + 1;
+      goToTrainsPage(page);
+    });
+  }
+};
+
+const hookTrainsCatalog = () => {
+  hookTrainsPagination();
+  loadTrainsCatalog();
 };
 
 const hookStationDetails = () => {
