@@ -41,6 +41,10 @@
         justify-content: center;
         gap: var(--space-md);
         margin-top: var(--space-lg);
+
+        &[hidden] {
+            display: none;
+        }
     }
 
     .trains-page-btn {
