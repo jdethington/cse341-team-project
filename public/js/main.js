@@ -189,6 +189,7 @@ const syncTrainsControlsFromUrl = () => {
   setIfPresent("trains-power", "powerSource");
   setIfPresent("trains-sort", "sort");
   setIfPresent("trains-order", "order");
+  setIfPresent("trains-limit", "limit");
 };
 
 const hookTrainsControls = () => {
@@ -203,6 +204,12 @@ const hookTrainsControls = () => {
 
   if (sortEl) {
     sortEl.addEventListener("change", () => applyTrainsParam("sort", sortEl.value));
+  }
+
+  const limitEl = document.getElementById("trains-limit");
+
+  if (limitEl) {
+    limitEl.addEventListener("change", () => applyTrainsParam("limit", limitEl.value));
   }
 
   if (orderEl) {
