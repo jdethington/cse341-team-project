@@ -42,6 +42,7 @@ const loadTrainsCatalog = async () => {
   const pageInfoEl = document.getElementById("trains-page-info");
   const prevBtn = document.getElementById("trains-prev");
   const nextBtn = document.getElementById("trains-next");
+  const paginationEl = document.querySelector(".trains-pagination");
 
   if (!listEl || !templateEl) {
     return;
@@ -107,6 +108,10 @@ const loadTrainsCatalog = async () => {
       errorEl.hidden = true;
     }
 
+    if (paginationEl) {
+      paginationEl.hidden = false;
+    }
+
     const pagination = payload.pagination || {};
     const totalPages = pagination.totalPages || 1;
     const currentPage = pagination.page || 1;
@@ -128,8 +133,10 @@ const loadTrainsCatalog = async () => {
     }
     if (errorEl) {
       errorEl.hidden = false;
-      errorEl.textContent =
-        "Unable to load trains right now. Please try again in a moment.";
+      errorEl.textContent = error.message;
+    }
+    if (paginationEl) {
+      paginationEl.hidden = true;
     }
   }
 };
