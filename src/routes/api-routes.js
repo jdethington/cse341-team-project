@@ -17,6 +17,7 @@ import {
 } from "../controllers/schedules.js";
 import { requireApiLogin } from "../middleware/auth.js";
 import { getUsers, updateUserById, deleteUser } from "../controllers/users.js";
+import { getTrainById, getAllTrains } from "../controllers/trains.js";
 
 const router = Router();
 
@@ -704,5 +705,188 @@ router.get("/api/users", requireApiLogin, getUsers);
 // API routes - require login
 router.patch("/api/users/:id", requireApiLogin, updateUserById);
 router.delete("/api/users/:id", requireApiLogin, deleteUser);
+
+// Trains API
+/**
+ * @openapi
+ * components:
+ *   schemas:
+ *     Train:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: string
+ *           example: series-e353
+ *         name:
+ *           type: string
+ *           example: Series E353 Limited Express
+ *         operator:
+ *           type: string
+ *           example: JR East
+ *         type:
+ *           type: string
+ *           example: Limited Express
+ *         maxSpeedKmh:
+ *           type: number
+ *           example: 130
+ *         capacity:
+ *           type: number
+ *           example: 360
+ *         powerSource:
+ *           type: string
+ *           example: Electric
+ *         bestFor:
+ *           type: string
+ *         description:
+ *           type: string
+ *     Pagination:
+ *       type: object
+ *       properties:
+ *         page:
+ *           type: integer
+ *           example: 1
+ *         limit:
+ *           type: integer
+ *           example: 10
+ *         totalItems:
+ *           type: integer
+ *           example: 4
+ *         totalPages:
+ *           type: integer
+ *           example: 1
+ *         hasNextPage:
+ *           type: boolean
+ *         hasPreviousPage:
+ *           type: boolean
+ *     ValidationError:
+ *       type: object
+ *       properties:
+ *         errors:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               field:
+ *                 type: string
+ *                 example: limit
+ *               message:
+ *                 type: string
+ *                 example: limit must be a number between 1 and 50.
+ */
+/**
+ * @openapi
+ * /api/trains:
+ *   get:
+ *     summary: List trains (paginated)
+ *     description: >
+ *       Returns trains in smaller, page-sized result sets. Results are
+ *       sorted by name (ascending) so page order is stable.
+ *     tags:
+ *       - Trains
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         description: Page number to return (starting at 1)
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         description: Number of trains per page (1 to 50)
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 50
+ *           default: 10
+ *     responses:
+ *       200:
+ *         description: A page of trains with pagination metadata
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Train'
+ *                 pagination:
+ *                   $ref: '#/components/schemas/Pagination'
+ *       400:
+ *         description: Invalid page or limit value
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationError'
+ *       404:
+ *         description: The requested page is past the last page
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Page 3 does not exist. The last page is 2.
+ *       500:
+ *         description: Failed to fetch trains
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Failed to fetch trains
+ */
+router.get("/api/trains", getAllTrains);
+
+/**
+ * @openapi
+ * /api/trains/{id}:
+ *   get:
+ *     summary: Retrieve a single train by id
+ *     description: Returns one train by its id (e.g., series-e353).
+ *     tags:
+ *       - Trains
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The train identifier (e.g., series-e353)
+ *     responses:
+ *       200:
+ *         description: The train
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Train'
+ *       404:
+ *         description: Train not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Train not found
+ *       500:
+ *         description: Failed to fetch train
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Failed to fetch train
+ */
+router.get("/api/trains/:id", getTrainById);
 
 export default router;

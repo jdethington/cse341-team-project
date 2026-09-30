@@ -9,16 +9,16 @@ describe('GET /api/trains', () => {
 
     expect(response.status).toBe(200);
     expect(response.headers['content-type']).toContain('application/json');
-    expect(response.body).toHaveProperty('trains');
-    expect(response.body.trains).toBeInstanceOf(Array);
+    expect(response.body).toHaveProperty('data');
+    expect(response.body.data).toBeInstanceOf(Array);
   });
 
   test('returns the trains from the starter data', async () => {
     const response = await request(app).get('/api/trains');
 
     expect(response.status).toBe(200);
-    expect(response.body.trains).toHaveLength(4);
-    expect(response.body.trains).toEqual(
+    expect(response.body.data).toHaveLength(4);
+    expect(response.body.data).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: 'series-e353',
@@ -39,7 +39,7 @@ describe('GET /api/trains', () => {
     const response = await request(app).get('/api/trains');
 
     expect(response.status).toBe(200);
-    expect(response.body.trains).toEqual(
+    expect(response.body.data).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: 'test-express',

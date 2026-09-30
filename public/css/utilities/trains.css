@@ -35,6 +35,43 @@
         gap: var(--space-lg);
     }
 
+    .trains-pagination {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--space-md);
+        margin-top: var(--space-lg);
+
+        &[hidden] {
+            display: none;
+        }
+    }
+
+    .trains-page-btn {
+        padding: var(--space-xs) var(--space-md);
+        border-radius: var(--radius-md);
+        border: 1px solid #b7c4e8;
+        background-color: #eef3ff;
+        color: var(--clr-text-primary);
+        font-size: var(--font-size-md);
+        cursor: pointer;
+
+        &:hover:not(:disabled) {
+            background-color: #dfe9ff;
+            border-color: var(--clr-primary);
+        }
+
+        &:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+    }
+
+    .trains-page-info {
+        color: var(--clr-text-secondary);
+        font-size: var(--font-size-md);
+    }
+
     .train-card {
         border-radius: var(--radius-lg);
         border: 1px solid #b7c4e8;
