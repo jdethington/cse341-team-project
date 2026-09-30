@@ -807,8 +807,9 @@ router.delete("/api/users/:id", requireApiLogin, deleteUser);
  *         name: q
  *         required: false
  *         description: >
- *           Keyword search across train name, operator, type, and
- *           description. 1 to 100 characters.
+ *           Keyword search. A case-insensitive substring match across train
+ *           name, operator, type, and description (so "jr" or "co" match).
+ *           1 to 100 characters.
  *         schema:
  *           type: string
  *           maxLength: 100

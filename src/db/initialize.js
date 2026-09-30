@@ -4,7 +4,6 @@ import schedules from './seeds/schedules.json' with { type: 'json' };
 import stations from './seeds/stations.json' with { type: 'json' };
 import ticketClasses from './seeds/ticket-classes.json' with { type: 'json' };
 import trains from './seeds/trains.json' with { type: 'json' };
-import Train from '../models/schemas/trains.js';
 
 // Standard roles for authentication
 const starterRoles = [
@@ -49,8 +48,6 @@ const initializeDatabase = async (db) => {
     await collection.insertMany(documents);
   }
 
-  // Ensure the trains text index (used by keyword search) exists after reseeding.
-  await Train.syncIndexes();
 
   const bookings = db.collection('bookings');
   await bookings.deleteMany({});

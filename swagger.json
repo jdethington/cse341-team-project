@@ -730,7 +730,7 @@
             "in": "query",
             "name": "q",
             "required": false,
-            "description": "Keyword search across train name, operator, type, and description. 1 to 100 characters.\n",
+            "description": "Keyword search. A case-insensitive substring match across train name, operator, type, and description (so \"jr\" or \"co\" match). 1 to 100 characters.\n",
             "schema": {
               "type": "string",
               "maxLength": 100

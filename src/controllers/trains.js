@@ -21,6 +21,10 @@ const ALLOWED_POWER_SOURCES = ["Electric", "Diesel", "Steam"];
 const DEFAULT_SORT = "name";
 const DEFAULT_ORDER = "asc";
 
+// Escape the user's search text so it is treated as a literal string, not a
+// regular expression.
+const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
 const parsePositiveInteger = (value, defaultValue) => {
     if (value === undefined) {
         return defaultValue;
@@ -38,6 +42,7 @@ const parsePositiveInteger = (value, defaultValue) => {
 const parseSearchParams = (query) => {
     const errors = [];
     const filter = {};
+    let searchText = null;
 
     if (query.q !== undefined) {
         if (typeof query.q !== "string") {
@@ -46,15 +51,22 @@ const parseSearchParams = (query) => {
                 message: "Search text must be a single string.",
             });
         } else {
-            const searchText = query.q.trim();
+            const trimmed = query.q.trim();
 
-            if (searchText.length < 1 || searchText.length > MAX_SEARCH_LENGTH) {
+            if (trimmed.length < 1 || trimmed.length > MAX_SEARCH_LENGTH) {
                 errors.push({
                     field: "q",
                     message: `Search text must be between 1 and ${MAX_SEARCH_LENGTH} characters.`,
                 });
             } else {
-                filter.$text = { $search: searchText };
+                searchText = trimmed;
+                const searchPattern = new RegExp(escapeRegex(trimmed), "i");
+                filter.$or = [
+                    { name: searchPattern },
+                    { operator: searchPattern },
+                    { type: searchPattern },
+                    { description: searchPattern },
+                ];
             }
         }
     }
@@ -89,6 +101,7 @@ const parseSearchParams = (query) => {
     return {
         errors,
         filter,
+        searchText,
         sort,
         order: query.order === "desc" ? "desc" : DEFAULT_ORDER,
     };
@@ -142,7 +155,7 @@ export async function getAllTrains(req, res) {
             });
         }
 
-        const { errors: searchErrors, filter, sort, order } = parseSearchParams(req.query);
+        const { errors: searchErrors, filter, searchText, sort, order } = parseSearchParams(req.query);
         errors.push(...searchErrors);
 
         if (errors.length > 0) {
@@ -172,7 +185,7 @@ export async function getAllTrains(req, res) {
             query: {
                 sort,
                 order,
-                ...(filter.$text ? { q: filter.$text.$search } : {}),
+                ...(searchText ? { q: searchText } : {}),
                 ...(filter.powerSource ? { powerSource: filter.powerSource } : {}),
             },
             pagination: {
