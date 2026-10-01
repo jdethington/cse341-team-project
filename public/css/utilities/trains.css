@@ -35,6 +35,49 @@
         gap: var(--space-lg);
     }
 
+    .trains-toolbar {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+        margin-bottom: var(--space-lg);
+        padding: var(--space-md);
+        border: 1px solid #b7c4e8;
+        border-radius: var(--radius-md);
+        background-color: #eef3ff;
+
+        .trains-toolbar-group {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-xxs);
+
+            label {
+                font-size: var(--font-size-sm);
+                color: var(--clr-text-secondary);
+            }
+
+            input[type="search"],
+            select {
+                padding: var(--space-xs) var(--space-sm);
+                border: 1px solid #cfdbf7;
+                border-radius: var(--radius-sm);
+                background-color: #ffffff;
+                color: var(--clr-text-primary);
+                font-size: var(--font-size-md);
+                font-family: inherit;
+
+                &:focus {
+                    outline: 2px solid var(--clr-primary);
+                    outline-offset: 1px;
+                }
+            }
+        }
+    }
+
+    .trains-empty {
+        margin-bottom: var(--space-md);
+        color: var(--clr-text-secondary);
+    }
+
     .trains-pagination {
         display: flex;
         align-items: center;

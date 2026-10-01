@@ -777,10 +777,12 @@ router.delete("/api/users/:id", requireApiLogin, deleteUser);
  * @openapi
  * /api/trains:
  *   get:
- *     summary: List trains (paginated)
+ *     summary: List trains (paginated, searchable, filterable, sortable)
  *     description: >
  *       Returns trains in smaller, page-sized result sets. Results are
- *       sorted by name (ascending) so page order is stable.
+ *       sorted by name (ascending) by default so page order is stable.
+ *       Supports keyword search, an exact powerSource filter, and custom
+ *       sort order.
  *     tags:
  *       - Trains
  *     parameters:
@@ -801,9 +803,42 @@ router.delete("/api/users/:id", requireApiLogin, deleteUser);
  *           minimum: 1
  *           maximum: 50
  *           default: 10
+ *       - in: query
+ *         name: q
+ *         required: false
+ *         description: >
+ *           Keyword search. A case-insensitive substring match across train
+ *           name, operator, type, and description (so "jr" or "co" match).
+ *           1 to 100 characters.
+ *         schema:
+ *           type: string
+ *           maxLength: 100
+ *       - in: query
+ *         name: powerSource
+ *         required: false
+ *         description: Exact match filter for the train's power source
+ *         schema:
+ *           type: string
+ *           enum: [Electric, Diesel, Steam]
+ *       - in: query
+ *         name: sort
+ *         required: false
+ *         description: Field to sort results by
+ *         schema:
+ *           type: string
+ *           enum: [name, operator, type, maxSpeedKmh, capacity, powerSource, createdAt]
+ *           default: name
+ *       - in: query
+ *         name: order
+ *         required: false
+ *         description: Sort direction
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: asc
  *     responses:
  *       200:
- *         description: A page of trains with pagination metadata
+ *         description: A page of trains with query and pagination metadata
  *         content:
  *           application/json:
  *             schema:
@@ -813,10 +848,22 @@ router.delete("/api/users/:id", requireApiLogin, deleteUser);
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Train'
+ *                 query:
+ *                   type: object
+ *                   description: The effective filters, sort field, and sort direction applied
+ *                   properties:
+ *                     q:
+ *                       type: string
+ *                     powerSource:
+ *                       type: string
+ *                     sort:
+ *                       type: string
+ *                     order:
+ *                       type: string
  *                 pagination:
  *                   $ref: '#/components/schemas/Pagination'
  *       400:
- *         description: Invalid page or limit value
+ *         description: Invalid page, limit, q, powerSource, sort, or order value
  *         content:
  *           application/json:
  *             schema:

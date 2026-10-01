@@ -10,6 +10,54 @@
 <section class="trains-catalog">
     <div class="trains-state" id="trains-loading">Loading trains...</div>
     <div class="trains-state trains-error" id="trains-error" hidden></div>
+    <div class="trains-state trains-empty" id="trains-empty" hidden>No trains matched your search. Try a different keyword, filter, or reset the controls.</div>
+
+    <div class="trains-toolbar">
+        <div class="trains-toolbar-group">
+            <label for="trains-search">Search</label>
+            <input type="search" id="trains-search" name="q" placeholder="Search trains, operators, types...">
+        </div>
+
+        <div class="trains-toolbar-group">
+            <label for="trains-power">Power source</label>
+            <select id="trains-power" name="powerSource">
+                <option value="">All</option>
+                <option value="Electric">Electric</option>
+                <option value="Diesel">Diesel</option>
+                <option value="Steam">Steam</option>
+            </select>
+        </div>
+
+        <div class="trains-toolbar-group">
+            <label for="trains-sort">Sort by</label>
+            <select id="trains-sort" name="sort">
+                <option value="name">Name</option>
+                <option value="operator">Operator</option>
+                <option value="type">Type</option>
+                <option value="maxSpeedKmh">Top speed</option>
+                <option value="capacity">Capacity</option>
+                <option value="powerSource">Power source</option>
+                <option value="createdAt">Date added</option>
+            </select>
+        </div>
+
+        <div class="trains-toolbar-group">
+            <label for="trains-order">Order</label>
+            <select id="trains-order" name="order">
+                <option value="asc">Ascending</option>
+                <option value="desc">Descending</option>
+            </select>
+        </div>
+
+        <div class="trains-toolbar-group">
+            <label for="trains-limit">Trains per page</label>
+            <select id="trains-limit" name="limit">
+                <option value="10">10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+            </select>
+        </div>
+    </div>
 
     <div class="trains-grid" id="trains-list"></div>
 
