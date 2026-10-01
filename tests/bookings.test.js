@@ -21,8 +21,8 @@ describe("GET /api/bookings", () => {
 
     expect(response.status).toBe(200);
     expect(response.headers["content-type"]).toContain("application/json");
-    expect(response.body).toHaveProperty("bookings");
-    expect(response.body.bookings).toBeInstanceOf(Array);
+    expect(response.body).toHaveProperty("data");
+    expect(response.body.data).toBeInstanceOf(Array);
   });
 
   test("returns a booking added to the test database for an admin", async () => {
@@ -49,7 +49,7 @@ describe("GET /api/bookings", () => {
     const response = await agent.get("/api/bookings");
 
     expect(response.status).toBe(200);
-    expect(response.body.bookings).toEqual(
+    expect(response.body.data).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           id: "JRTESTBOOK1",
@@ -61,20 +61,20 @@ describe("GET /api/bookings", () => {
 });
 
 describe("GET /api/bookings pagination", () => {
-  test("returns meta and at most limit items for admin", async () => {
+  test("returns pagination and at most limit items for admin", async () => {
     const agent = await loginAs("admin", "password1#");
     const response = await agent.get("/api/bookings?page=1&limit=10");
 
     expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty("bookings");
-    expect(response.body).toHaveProperty("meta");
-    expect(response.body.meta).toMatchObject({
+    expect(response.body).toHaveProperty("data");
+    expect(response.body).toHaveProperty("pagination");
+    expect(response.body.pagination).toMatchObject({
       page: 1,
       limit: 10,
     });
-    expect(typeof response.body.meta.total).toBe("number");
-    expect(typeof response.body.meta.totalPages).toBe("number");
-    expect(response.body.bookings.length).toBeLessThanOrEqual(10);
+    expect(typeof response.body.pagination.totalItems).toBe("number");
+    expect(typeof response.body.pagination.totalPages).toBe("number");
+    expect(response.body.data.length).toBeLessThanOrEqual(10);
   });
 
   test("defaults to page 1 when page is omitted", async () => {
@@ -82,7 +82,7 @@ describe("GET /api/bookings pagination", () => {
     const response = await agent.get("/api/bookings?limit=10");
 
     expect(response.status).toBe(200);
-    expect(response.body.meta.page).toBe(1);
+    expect(response.body.pagination.page).toBe(1);
   });
 
   test("rejects invalid page with 400", async () => {
@@ -90,6 +90,32 @@ describe("GET /api/bookings pagination", () => {
     const response = await agent.get("/api/bookings?page=0&limit=10");
 
     expect(response.status).toBe(400);
+  });
+
+  test("returns 404 when page is past the last page", async () => {
+    await getDb()
+      .collection("bookings")
+      .insertOne({
+        id: "JRPAGE404",
+        createdAt: new Date().toISOString(),
+        scheduleId: "1",
+        tripId: "alpine-panorama",
+        ticketClass: "standard",
+        selectedDay: "monday",
+        passengers: [
+          {
+            firstName: "Page",
+            lastName: "Four",
+            email: "page404@example.com",
+            phone: "555-0100",
+          },
+        ],
+      });
+
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent.get("/api/bookings?page=999&limit=10");
+
+    expect(response.status).toBe(404);
   });
 
   test("rejects invalid limit with 400", async () => {
@@ -132,16 +158,15 @@ describe("GET /api/bookings pagination", () => {
 
     expect(page1.status).toBe(200);
     expect(page2.status).toBe(200);
-    expect(page1.body.bookings).toHaveLength(10);
-    expect(page2.body.bookings.length).toBeGreaterThan(0);
+    expect(page1.body.data).toHaveLength(10);
+    expect(page2.body.data.length).toBeGreaterThan(0);
 
-    const ids1 = page1.body.bookings.map((b) => b.id);
-    const ids2 = page2.body.bookings.map((b) => b.id);
-    const overlap = ids1.filter((id) => ids2.includes(id));
-    expect(overlap).toHaveLength(0);
+    const ids1 = page1.body.data.map((b) => b.id);
+    const ids2 = page2.body.data.map((b) => b.id);
 
-    expect(page1.body.meta.hasNextPage).toBe(true);
-    expect(page2.body.meta.hasPreviousPage).toBe(true);
+    expect(ids1.filter((id) => ids2.includes(id))).toHaveLength(0); // No overlap between pages
+    expect(page1.body.pagination.hasNextPage).toBe(true);
+    expect(page2.body.pagination.hasPreviousPage).toBe(true);
   });
 });
 

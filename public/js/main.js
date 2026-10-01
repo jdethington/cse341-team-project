@@ -253,8 +253,8 @@ const hookBookingsCatalog = () => {
   }
 
   let currentPage = 1;
-  const pageLimit = 10;
   let totalPages = 1;
+  const pageLimit = 10;
   let bookingsById = new Map();
 
   const setMessage = (text) => {
@@ -268,26 +268,26 @@ const hookBookingsCatalog = () => {
     messageEl.textContent = text;
   };
 
-  const updatePaginationUi = (meta) => {
-    if (!meta || !paginationEl) return;
+  const updatePaginationUi = (pagination) => {
+    if (!pagination || !paginationEl) return;
 
-    currentPage = meta.page;
-    totalPages = meta.totalPages || 1;
+    currentPage = pagination.page;
+    totalPages = pagination.totalPages || 1;
 
     paginationEl.hidden = false;
 
     if (pageInfoEl) {
       pageInfoEl.hidden = false;
-      pageInfoEl.textContent = `Page ${meta.page} of ${meta.totalPages} (${meta.total} bookings)`;
+      pageInfoEl.textContent = `Page ${pagination.page} of ${pagination.totalPages} (${pagination.totalItems} bookings)`;
     }
     if (pageLabelEl) {
-      pageLabelEl.textContent = `Page ${meta.page} / ${meta.totalPages}`;
+      pageLabelEl.textContent = `Page ${pagination.page} / ${pagination.totalPages}`;
     }
     if (prevBtn) {
-      prevBtn.disabled = !meta.hasPreviousPage;
+      prevBtn.disabled = !pagination.hasPreviousPage;
     }
     if (nextBtn) {
-      nextBtn.disabled = !meta.hasNextPage;
+      nextBtn.disabled = !pagination.hasNextPage;
     }
   };
 
@@ -376,13 +376,14 @@ const hookBookingsCatalog = () => {
       }
 
       const payload = await response.json();
-      const bookings = payload.bookings || [];
+      const bookings = payload.data || [];
+      const pagination = payload.pagination || {};
       bookingsById = new Map(bookings.map((b) => [b.id, b]));
 
       renderBookings();
 
-      if (payload.meta) {
-        updatePaginationUi(payload.meta);
+      if (pagination) {
+        updatePaginationUi(pagination);
       }
     } catch (error) {
       console.error("Error loading bookings:", error);
@@ -607,7 +608,7 @@ const hookMyBookings = async () => {
     }
 
     const payload = await response.json();
-    const bookings = payload.bookings || [];
+    const bookings = payload.data || [];
     const fragment = document.createDocumentFragment();
 
     if (bookings.length === 0) {

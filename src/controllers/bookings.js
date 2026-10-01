@@ -131,16 +131,21 @@ export async function getAllBookings(req, res) {
       order: -1,
     });
 
-    const totalPages = Math.max(1, Math.ceil(totalItems / limit) || 1);
+    const totalPages = Math.ceil(totalItems / limit);
+
+    if (totalItems > 0 && page > totalPages) {
+      return res.status(404).json({
+        errors: `Page ${page} does not exist. Total pages: ${totalPages}.`,
+      });
+    }
 
     return res.status(200).json({
-      bookings,
-      meta: {
+      data: bookings,
+      pagination: {
         page,
         limit,
-        total: totalItems,
-        totalPages,
         totalItems,
+        totalPages,
         hasNextPage: page * limit < totalItems,
         hasPreviousPage: page > 1,
         sort: "createdAt",
