@@ -72,7 +72,7 @@ export async function deleteUser(req, res, next) {
 
 // API: Returns all users (admin) or just the current user (customer)
 const DEFAULT_PAGE = 1;
-const DEFAULT_LIMIT = 5;
+const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
 const allowedSortFields = ['username', 'name', 'email'];
 

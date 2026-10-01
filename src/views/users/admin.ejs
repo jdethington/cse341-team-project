@@ -59,7 +59,7 @@
                 const params = new URLSearchParams(window.location.search);
                 const page = params.get('page') || '1';
 
-                const response = await fetch(`/api/users?page=${page}&limit=5&sort=username&order=asc`);
+                const response = await fetch(`/api/users?page=${page}&limit=10&sort=username&order=asc`);
                 if (!response.ok) {
                     throw new Error('Failed to fetch users');
                 }
