@@ -15,6 +15,13 @@
         <div id="users-list">
             <p>Loading users...</p>
         </div>
+        <!-- Pagination controls -->
+        <nav class="users-pagination" aria-label="User pages"
+            style="margin-top: 1rem; display: flex; align-items: center; gap: 1rem;">
+            <button type="button" class="btn" id="users-prev">Previous</button>
+            <span id="users-page-info">Page 1 of 1</span>
+            <button type="button" class="btn" id="users-next">Next</button>
+        </nav>
         <!-- Edit modal -->
         <dialog id="edit-modal" class="auth-card">
             <h2>Edit User</h2>
@@ -48,12 +55,24 @@
         // fetch users from API 
         async function fetchAndRenderUsers() {
             try {
-                const response = await fetch('/api/users');
+                // read current page from URL (?page=2) or default to 1
+                const params = new URLSearchParams(window.location.search);
+                const page = params.get('page') || '1';
+
+                const response = await fetch(`/api/users?page=${page}&limit=5&sort=username&order=asc`);
                 if (!response.ok) {
                     throw new Error('Failed to fetch users');
                 }
-                const users = await response.json();
-                renderUsers(users);
+
+                // response is now { data: [...], pagination: {...} }
+                const result = await response.json();
+
+                // render the users table
+                renderUsers(result.data);
+
+                // update the pagination controls
+                updatePagination(result.pagination);
+
             } catch (error) {
                 console.error(error);
                 document.getElementById('users-list').innerHTML =
@@ -108,6 +127,52 @@
             </table>
         `;
         }
+
+        // update pagination controls in the DOM
+        function updatePagination(pagination) {
+            const prevBtn = document.getElementById('users-prev');
+            const nextBtn = document.getElementById('users-next');
+            const pageInfo = document.getElementById('users-page-info');
+
+            if (!prevBtn || !nextBtn || !pageInfo) return;
+
+            // update the "Page X of Y" text
+            pageInfo.textContent = `Page ${pagination.page} of ${pagination.totalPages}`;
+
+            // disable prev on first page
+            prevBtn.disabled = !pagination.hasPreviousPage;
+
+            // disable next on last page  
+            nextBtn.disabled = !pagination.hasNextPage;
+        }
+
+        function goToPage(page) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('page', String(page));
+            window.location.href = url.toString();
+        }
+
+        function hookPagination() {
+            const prevBtn = document.getElementById('users-prev');
+            const nextBtn = document.getElementById('users-next');
+
+            if (prevBtn) {
+                prevBtn.addEventListener('click', () => {
+                    const params = new URLSearchParams(window.location.search);
+                    const page = Number(params.get('page') || '1') - 1;
+                    if (page >= 1) goToPage(page);
+                });
+            }
+
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => {
+                    const params = new URLSearchParams(window.location.search);
+                    const page = Number(params.get('page') || '1') + 1;
+                    goToPage(page);
+                });
+            }
+        }
+
         // Open the edit modal and pre-fill the form
         function openEditModal(id, name, username, email) {
             document.getElementById('edit-id').value = id;
@@ -175,9 +240,9 @@
             document.getElementById('edit-modal').close();
         });
 
-        // Load users on page load
+        // wire up pagination buttons and load users
+        hookPagination();
         fetchAndRenderUsers();
     </script>
-
 
     <%- include('../partials/footer') %>

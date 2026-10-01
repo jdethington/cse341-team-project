@@ -552,10 +552,35 @@
     },
     "/api/users": {
       "get": {
-        "summary": "List users",
+        "summary": "List users (paginated for admins, single user for customers)",
         "description": "Returns all users for admins, or only the signed-in user's own record for customers.\n",
         "tags": [
           "Users"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "description": "Page number to return (starting at 1)",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "description": "Number of users per page (1 to 50)",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 50,
+              "default": 10
+            }
+          }
         ],
         "responses": {
           "200": {
@@ -1112,45 +1137,6 @@
           }
         }
       },
-      "Train": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "example": "series-e353"
-          },
-          "name": {
-            "type": "string",
-            "example": "Series E353 Limited Express"
-          },
-          "operator": {
-            "type": "string",
-            "example": "JR East"
-          },
-          "type": {
-            "type": "string",
-            "example": "Limited Express"
-          },
-          "maxSpeedKmh": {
-            "type": "number",
-            "example": 130
-          },
-          "capacity": {
-            "type": "number",
-            "example": 360
-          },
-          "powerSource": {
-            "type": "string",
-            "example": "Electric"
-          },
-          "bestFor": {
-            "type": "string"
-          },
-          "description": {
-            "type": "string"
-          }
-        }
-      },
       "Pagination": {
         "type": "object",
         "properties": {
@@ -1196,6 +1182,45 @@
                 }
               }
             }
+          }
+        }
+      },
+      "Train": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "series-e353"
+          },
+          "name": {
+            "type": "string",
+            "example": "Series E353 Limited Express"
+          },
+          "operator": {
+            "type": "string",
+            "example": "JR East"
+          },
+          "type": {
+            "type": "string",
+            "example": "Limited Express"
+          },
+          "maxSpeedKmh": {
+            "type": "number",
+            "example": 130
+          },
+          "capacity": {
+            "type": "number",
+            "example": 360
+          },
+          "powerSource": {
+            "type": "string",
+            "example": "Electric"
+          },
+          "bestFor": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
           }
         }
       }

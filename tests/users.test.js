@@ -53,7 +53,29 @@ describe("GET /api/users", () => {
             .set("Cookie", sessionCookie);
 
         expect(response.status).toBe(200);
-        expect(response.body).toBeInstanceOf(Array);
+        expect(response.body).toHaveProperty('data');
+        expect(response.body).toHaveProperty('pagination');
+        expect(response.body.data).toBeInstanceOf(Array);
+        expect(response.body.pagination).toHaveProperty('page');
+        expect(response.body.pagination).toHaveProperty('totalItems');
+    });
+
+    test("returns 400 for invalid page parameter", async () => {
+        const response = await request(app)
+            .get("/api/users?page=abc")
+            .set("Cookie", sessionCookie);
+
+        expect(response.status).toBe(400);
+        expect(response.body).toHaveProperty('errors');
+    });
+
+    test("returns 400 when limit exceeds maximum", async () => {
+        const response = await request(app)
+            .get("/api/users?limit=100")
+            .set("Cookie", sessionCookie);
+
+        expect(response.status).toBe(400);
+        expect(response.body).toHaveProperty('errors');
     });
 });
 

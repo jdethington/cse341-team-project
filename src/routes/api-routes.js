@@ -595,17 +595,68 @@ router.get("/api/trips/:id/schedules", getSchedulesForTrip);
  *             name:
  *               type: string
  *               example: "admin"
+ *     Pagination:
+ *       type: object
+ *       properties:
+ *         page:
+ *           type: integer
+ *           example: 1
+ *         limit:
+ *           type: integer
+ *           example: 10
+ *         totalItems:
+ *           type: integer
+ *           example: 4
+ *         totalPages:
+ *           type: integer
+ *           example: 1
+ *         hasNextPage:
+ *           type: boolean
+ *         hasPreviousPage:
+ *           type: boolean
+ *     ValidationError:
+ *       type: object
+ *       properties:
+ *         errors:
+ *           type: array
+ *           items:
+ *             type: object
+ *             properties:
+ *               field:
+ *                 type: string
+ *                 example: limit
+ *               message:
+ *                 type: string
+ *                 example: limit must be a number between 1 and 50.
  */
 /**
  * @openapi
  * /api/users:
  *   get:
- *     summary: List users
+ *     summary: List users (paginated for admins, single user for customers)
  *     description: >
  *       Returns all users for admins, or only the signed-in user's
  *       own record for customers.
  *     tags:
  *       - Users
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         description: Page number to return (starting at 1)
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         description: Number of users per page (1 to 50)
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 50
+ *           default: 10
  *     responses:
  *       200:
  *         description: User list returned successfully
