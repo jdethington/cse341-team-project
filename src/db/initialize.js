@@ -48,7 +48,6 @@ const initializeDatabase = async (db) => {
     await collection.insertMany(documents);
   }
 
-
   const bookings = db.collection('bookings');
   await bookings.deleteMany({});
   await bookings.createIndex({ id: 1 }, { unique: true });
