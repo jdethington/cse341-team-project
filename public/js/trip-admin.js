@@ -140,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadTrips = async (selectedScheduleId = '') => {
         try {
             const [tripsResponse, freshSchedules] = await Promise.all([
-                fetch('/api/trips'),
+                fetch('/api/trips?limit=48'),
                 fetchSchedules()
             ]);
 
@@ -159,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 renderScheduleOptions(schedules, selectedScheduleId);
             }
 
-            renderTrips(Array.isArray(data) ? data : (data.trips || []));
+            renderTrips(Array.isArray(data) ? data : (data.data || data.trips || []));
         } catch (error) {
             console.error('Error fetching trips:', error);
             setTableMessage('Error loading trips data.');

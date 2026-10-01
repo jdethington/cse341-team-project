@@ -14,6 +14,23 @@ export async function getAllTrips() {
     }
 }
 
+// Get one page of trips along with the total item count for pagination metadata
+export async function getPaginatedTrips({ filter = {}, page, limit, sort, order }) {
+    try {
+        const skip = (page - 1) * limit;
+        const sortOptions = { [sort]: order };
+
+        const [trips, totalItems] = await Promise.all([
+            Trip.find(filter).sort(sortOptions).skip(skip).limit(limit).lean(),
+            Trip.countDocuments(filter)
+        ]);
+
+        return { trips, totalItems };
+    } catch (error) {
+        throw new Error(`Failed to fetch trips: ${error.message}`);
+    }
+}
+
 // Get a single trip by its MongoDB _id
 export async function getTripById(id) {
     try {

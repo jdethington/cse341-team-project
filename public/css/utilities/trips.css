@@ -302,3 +302,42 @@
         }
     }
 }
+
+.trips-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+
+    &[hidden] {
+        display: none;
+    }
+
+    .trips-page-btn {
+        padding: var(--space-xs) var(--space-md);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--clr-primary-light);
+        background-color: var(--clr-primary-pale);
+        color: var(--clr-text-primary);
+        font-size: var(--font-size-md);
+        cursor: pointer;
+        transition: background-color 0.2s ease, border-color 0.2s ease;
+
+        &:hover:not(:disabled) {
+            background-color: var(--clr-primary-light);
+            border-color: var(--clr-primary);
+        }
+
+        &:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+    }
+
+    .trips-page-info {
+        color: var(--clr-text-secondary);
+        font-size: var(--font-size-md);
+    }
+}

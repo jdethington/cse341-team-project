@@ -26,6 +26,13 @@
     <p>Loading trips...</p>
 </div>
 
+<!-- Pagination controls stay hidden until a page of trips is rendered -->
+<nav class="trips-pagination" id="trips-pagination" aria-label="Trip pages" hidden>
+    <button type="button" class="trips-page-btn" id="trips-prev">Previous</button>
+    <span class="trips-page-info" id="trips-page-info">Page 1 of 1</span>
+    <button type="button" class="trips-page-btn" id="trips-next">Next</button>
+</nav>
+
 <script src="/js/trips-list.js"></script>
 
 <%- include('../partials/footer') %>
