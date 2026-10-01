@@ -23,6 +23,24 @@ const getBookingsByUserEmail = async (email) => {
   }).lean();
 };
 
+const getBookingsPage = async ({
+  filter = {},
+  page = 1,
+  limit = 10,
+  sort = "createdAt",
+  order = -1,
+}) => {
+  const skip = (page - 1) * limit;
+  const sortOptions = { [sort]: order };
+
+  const [bookings, totalItems] = await Promise.all([
+    Booking.find(filter).sort(sortOptions).skip(skip).limit(limit).lean(),
+    Booking.countDocuments(filter),
+  ]);
+
+  return { bookings, totalItems };
+};
+
 const updateBooking = async (id, updates) => {
   const { id: _ignoreId, _id, ...safeUpdates } = updates;
 
@@ -46,6 +64,7 @@ export {
   getAllBookings,
   getBookingById,
   getBookingsByUserEmail,
+  getBookingsPage,
   updateBooking,
   deleteBooking,
 };

@@ -60,6 +60,91 @@ describe("GET /api/bookings", () => {
   });
 });
 
+describe("GET /api/bookings pagination", () => {
+  test("returns meta and at most limit items for admin", async () => {
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent.get("/api/bookings?page=1&limit=10");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty("bookings");
+    expect(response.body).toHaveProperty("meta");
+    expect(response.body.meta).toMatchObject({
+      page: 1,
+      limit: 10,
+    });
+    expect(typeof response.body.meta.total).toBe("number");
+    expect(typeof response.body.meta.totalPages).toBe("number");
+    expect(response.body.bookings.length).toBeLessThanOrEqual(10);
+  });
+
+  test("defaults to page 1 when page is omitted", async () => {
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent.get("/api/bookings?limit=10");
+
+    expect(response.status).toBe(200);
+    expect(response.body.meta.page).toBe(1);
+  });
+
+  test("rejects invalid page with 400", async () => {
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent.get("/api/bookings?page=0&limit=10");
+
+    expect(response.status).toBe(400);
+  });
+
+  test("rejects invalid limit with 400", async () => {
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent.get("/api/bookings?page=1&limit=0");
+
+    expect(response.status).toBe(400);
+  });
+
+  test("rejects limit above maximum with 400", async () => {
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent.get("/api/bookings?page=1&limit=999");
+
+    expect(response.status).toBe(400);
+  });
+
+  test("page 2 returns a different slice when enough data exists", async () => {
+    const db = getDb();
+    const docs = Array.from({ length: 15 }, (_, i) => ({
+      id: `PAGEBOOK${String(i).padStart(2, "0")}`,
+      createdAt: new Date(2026, 0, i + 1).toISOString(),
+      scheduleId: "1",
+      tripId: "alpine-panorama",
+      ticketClass: "standard",
+      selectedDay: "monday",
+      passengers: [
+        {
+          firstName: "Page",
+          lastName: `User${i}`,
+          email: `page${i}@example.com`,
+          phone: "555-0100",
+        },
+      ],
+    }));
+    await db.collection("bookings").insertMany(docs);
+
+    const agent = await loginAs("admin", "password1#");
+    const page1 = await agent.get("/api/bookings?page=1&limit=10");
+    const page2 = await agent.get("/api/bookings?page=2&limit=10");
+
+    expect(page1.status).toBe(200);
+    expect(page2.status).toBe(200);
+    expect(page1.body.bookings).toHaveLength(10);
+    expect(page2.body.bookings.length).toBeGreaterThan(0);
+
+    const ids1 = page1.body.bookings.map((b) => b.id);
+    const ids2 = page2.body.bookings.map((b) => b.id);
+    const overlap = ids1.filter((id) => ids2.includes(id));
+    expect(overlap).toHaveLength(0);
+
+    expect(page1.body.meta.hasNextPage).toBe(true);
+    expect(page2.body.meta.hasPreviousPage).toBe(true);
+  });
+});
+
 describe("Bookings admin page", () => {
   test("redirects to login when not authenticated", async () => {
     const response = await request(app).get("/bookings-admin");

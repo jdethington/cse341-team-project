@@ -389,30 +389,32 @@ router.get("/api/trips/:id", getTripById);
  * @openapi
  * /api/bookings:
  *   get:
- *     summary: List bookings
+ *     summary: List bookings (paginated, role-scoped)
  *     tags:
  *       - Bookings
- *     security:
- *       - sessionCookie: []
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *           minimum: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 10
+ *           minimum: 1
+ *           maximum: 50
  *     responses:
  *       200:
- *         description: Bookings retrieved successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 bookings:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Booking'
+ *         description: Paginated bookings
+ *       400:
+ *         description: Invalid pagination parameters
  *       401:
  *         description: Authentication required
- *       500:
- *         description: Unable to retrieve bookings
  */
 router.get("/api/bookings", requireApiLogin, getAllBookings);
-
 /**
  * @openapi
  * /api/bookings/me:
