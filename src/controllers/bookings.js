@@ -3,14 +3,15 @@ import {
   getAllBookings as findAllBookings,
   getBookingById as findBookingById,
   getBookingsByUserEmail as findBookingsByUserEmail,
+  getBookingsPage,
   updateBooking as updateBookingRecord,
   deleteBooking as deleteBookingRecord,
 } from "../models/bookings.js";
 import { getAllTicketClasses } from "../models/ticket-classes.js";
-// import { getTripById } from "../models/trips.js"; // Uncomment this line when the getTripById function is implemented in the trips model
-// import { getScheduleById } from "../models/schedules.js"; // Uncomment this line when the getScheduleById function is implemented in the schedules model
+import { getTripById } from "../models/trips.js"; // Uncomment this line when the getTripById function is implemented in the trips model
+import { getScheduleById } from "../models/schedules.js"; // Uncomment this line when the getScheduleById function is implemented in the schedules model
 import { generateBookingCode } from "../includes/helpers.js";
-import { getDb } from "../db/connect.js";
+// import { getDb } from "../db/connect.js";
 
 // Helper functions
 function userIsAdmin(user) {
@@ -32,6 +33,39 @@ function userIsPassengerOnBooking(user, booking) {
 
 function canManageBooking(user, booking) {
   return userIsAdmin(user) || userIsPassengerOnBooking(user, booking);
+}
+
+const DEFAULT_PAGE = 1;
+const DEFAULT_LIMIT = 10;
+const MAX_LIMIT = 50;
+
+function parsePositiveInteger(value, defaultValue) {
+  if (value === undefined || value === "") {
+    return defaultValue;
+  }
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1) {
+    return null;
+  }
+  return parsed;
+}
+
+/**
+ * Build base Mongo filter from the signed-in user (role scope).
+ * PR 2 will add ticketClass / date filters onto this object.
+ */
+function buildBookingFilter(req) {
+  const filter = {};
+
+  if (!userIsAdmin(req.user)) {
+    const email = String(req.user.email || "")
+      .trim()
+      .toLowerCase()
+      .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    filter["passengers.email"] = { $regex: new RegExp(`^${email}$`, "i") };
+  }
+
+  return filter;
 }
 
 // Controller functions for handling booking-related requests
@@ -61,29 +95,65 @@ export async function processBookingRequest(req, res) {
 }
 
 /**
- * GET /api/bookings
- * Admin: all bookings
- * Non-admin: only bookings where their email is a passenger
+ * GET /api/bookings?page=&limit=
+ * Admin: all bookings. Non-admin: passenger match only.
+ * Default sort: createdAt descending (newest first).
  */
 export async function getAllBookings(req, res) {
   try {
     if (!req.user) {
       return res.status(401).json({ message: "Authentication required" });
     }
-    let bookings;
-    if (userIsAdmin(req.user)) {
-      bookings = await findAllBookings();
-    } else {
-      bookings = await findBookingsByUserEmail(req.user.email);
+
+    const page = parsePositiveInteger(req.query.page, DEFAULT_PAGE);
+    const requestedLimit = parsePositiveInteger(req.query.limit, DEFAULT_LIMIT);
+
+    if (!page || !requestedLimit || requestedLimit > MAX_LIMIT) {
+      return res.status(400).json({
+        errors: [
+          {
+            field: "pagination",
+            message:
+              "page and limit must be positive integers. Maximum limit is 50.",
+          },
+        ],
+      });
     }
-    return res.status(200).json({ bookings });
+
+    const limit = requestedLimit;
+    const filter = buildBookingFilter(req);
+
+    const { bookings, totalItems } = await getBookingsPage({
+      filter,
+      page,
+      limit,
+      sort: "createdAt",
+      order: -1,
+    });
+
+    const totalPages = Math.ceil(totalItems / limit);
+
+    if (totalItems > 0 && page > totalPages) {
+      return res.status(404).json({
+        errors: `Page ${page} does not exist. Total pages: ${totalPages}.`,
+      });
+    }
+
+    return res.status(200).json({
+      data: bookings,
+      pagination: {
+        page,
+        limit,
+        totalItems,
+        totalPages,
+        hasNextPage: page * limit < totalItems,
+        hasPreviousPage: page > 1,
+        sort: "createdAt",
+        order: "desc",
+      },
+    });
   } catch (error) {
     console.error("Error fetching bookings:", error);
-
-    // return res.status(500).json("errors/500", {
-    //   title: "Server Error",
-    //   error: "Failed to fetch bookings",
-    // });
     return res.status(500).json({ message: "Failed to fetch bookings" });
   }
 }
@@ -157,21 +227,21 @@ export async function bookingPage(req, res) {
     const { scheduleId } = req.params;
     // Change to use Mongoose model instead of the database connection directly
     // Will need to wait until after Feature Set 1 & 2 are implemented to use the Mongoose model for schedules and trips
-    const db = getDb();
-    const schedule = await db
-      .collection("schedules")
-      .findOne({ id: Number(scheduleId) });
-    // const schedule = await getScheduleById(scheduleId); // Assuming getScheduleById is a function that retrieves a schedule by its ID
+    // const db = getDb();
+    // const schedule = await db
+    //   .collection("schedules")
+    //   .findOne({ id: Number(scheduleId) });
+    const schedule = await getScheduleById(scheduleId); // Assuming getScheduleById is a function that retrieves a schedule by its ID
     if (!schedule) {
-      // return res.status(404).json("errors/404", {
-      //   title: "Schedule Not Found",
-      //   error: "The requested schedule does not exist.",
-      // });
-      return res.status(404).json({ message: "Schedule not found" });
+      return res.status(404).json("errors/404", {
+        title: "Schedule Not Found",
+        error: "The requested schedule does not exist.",
+      });
+      // return res.status(404).json({ message: "Schedule not found" });
     }
 
-    const trip = await db.collection("trips").findOne({ id: schedule.tripId });
-    // const trip = await getTripById(schedule.tripId); // Assuming getTripById is a function that retrieves a trip by its ID
+    // const trip = await db.collection("trips").findOne({ id: schedule.tripId });
+    const trip = await getTripById(schedule.tripId); // Assuming getTripById is a function that retrieves a trip by its ID
     if (!trip) {
       return res.status(404).json("errors/404", {
         title: "Trip Not Found",
@@ -186,6 +256,7 @@ export async function bookingPage(req, res) {
       price: trip.distance * ticketClass.pricePerKm,
       amenities: ticketClass.amenities,
       description: ticketClass.description,
+      available: ticketClass.available,
     }));
 
     return res.render("trips/book", {

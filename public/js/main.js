@@ -330,11 +330,19 @@ const hookBookingsCatalog = () => {
   const errorEl = document.getElementById("bookings-error");
   const emptyEl = document.getElementById("bookings-empty");
   const messageEl = document.getElementById("bookings-message");
+  const pageInfoEl = document.getElementById("bookings-page-info");
+  const paginationEl = document.getElementById("bookings-pagination");
+  const pageLabelEl = document.getElementById("bookings-page-label");
+  const prevBtn = document.getElementById("bookings-prev");
+  const nextBtn = document.getElementById("bookings-next");
 
   if (!listEl || !cardTemplate) {
     return;
   }
 
+  let currentPage = 1;
+  let totalPages = 1;
+  const pageLimit = 10;
   let bookingsById = new Map();
 
   const setMessage = (text) => {
@@ -346,6 +354,29 @@ const hookBookingsCatalog = () => {
     }
     messageEl.hidden = false;
     messageEl.textContent = text;
+  };
+
+  const updatePaginationUi = (pagination) => {
+    if (!pagination || !paginationEl) return;
+
+    currentPage = pagination.page;
+    totalPages = pagination.totalPages || 1;
+
+    paginationEl.hidden = false;
+
+    if (pageInfoEl) {
+      pageInfoEl.hidden = false;
+      pageInfoEl.textContent = `Page ${pagination.page} of ${pagination.totalPages} (${pagination.totalItems} bookings)`;
+    }
+    if (pageLabelEl) {
+      pageLabelEl.textContent = `Page ${pagination.page} / ${pagination.totalPages}`;
+    }
+    if (prevBtn) {
+      prevBtn.disabled = !pagination.hasPreviousPage;
+    }
+    if (nextBtn) {
+      nextBtn.disabled = !pagination.hasNextPage;
+    }
   };
 
   const renderBookings = () => {
@@ -362,31 +393,42 @@ const hookBookingsCatalog = () => {
 
     for (const booking of bookingsById.values()) {
       const card = cardTemplate.content.cloneNode(true);
-      const article = card.querySelector("[data-booking-id]");
-      article.dataset.bookingId = booking.id;
+      const article =
+        card.querySelector("[data-booking-id]") ||
+        card.querySelector(".booking-card");
+      if (article) {
+        article.dataset.bookingId = booking.id;
+      }
 
-      card.querySelector('[data-field="id"]').textContent = booking.id;
-      card.querySelector('[data-field="created-at"]').textContent =
-        booking.createdAt;
-      card.querySelector('[data-field="schedule-id"]').textContent =
-        booking.scheduleId;
-      card.querySelector('[data-field="trip-id"]').textContent = booking.tripId;
-      card.querySelector('[data-field="ticket-class"]').textContent =
-        booking.ticketClass;
-      card.querySelector('[data-field="selected-day"]').textContent =
-        booking.selectedDay;
+      const setField = (name, value) => {
+        const el = card.querySelector(`[data-field="${name}"]`);
+        if (el) el.textContent = value ?? "";
+      };
+
+      setField("id", booking.id);
+      setField(
+        "created-at",
+        booking.createdAt ? new Date(booking.createdAt).toLocaleString() : "",
+      );
+      setField("schedule-id", booking.scheduleId);
+      setField("trip-id", booking.tripId);
+      setField("ticket-class", booking.ticketClass);
+      setField("selected-day", booking.selectedDay);
 
       const passengersEl = card.querySelector('[data-field="passengers"]');
-      const passengers = Array.isArray(booking.passengers)
-        ? booking.passengers
-        : Object.values(booking.passengers || {});
-      passengers.forEach((passenger) => {
-        const li = document.createElement("li");
-        li.textContent =
-          `${passenger.firstName} ${passenger.lastName} — ` +
-          `${passenger.email} — ${passenger.phone}`;
-        passengersEl.appendChild(li);
-      });
+      if (passengersEl) {
+        passengersEl.replaceChildren();
+        const passengers = Array.isArray(booking.passengers)
+          ? booking.passengers
+          : Object.values(booking.passengers || {});
+        passengers.forEach((passenger) => {
+          const li = document.createElement("li");
+          li.textContent =
+            `${passenger.firstName} ${passenger.lastName} — ` +
+            `${passenger.email} — ${passenger.phone}`;
+          passengersEl.appendChild(li);
+        });
+      }
 
       fragment.appendChild(card);
     }
@@ -394,14 +436,21 @@ const hookBookingsCatalog = () => {
     listEl.replaceChildren(fragment);
   };
 
-  const loadBookings = async () => {
+  const loadBookings = async (page = currentPage) => {
     if (loadingEl) loadingEl.hidden = false;
     if (errorEl) errorEl.hidden = true;
     if (emptyEl) emptyEl.hidden = true;
     setMessage("");
 
+    currentPage = page;
+
+    const params = new URLSearchParams({
+      page: String(currentPage),
+      limit: String(pageLimit),
+    });
+
     try {
-      const response = await fetch("/api/bookings", {
+      const response = await fetch(`/api/bookings?${params}`, {
         credentials: "same-origin",
       });
 
@@ -415,9 +464,15 @@ const hookBookingsCatalog = () => {
       }
 
       const payload = await response.json();
-      const bookings = payload.bookings || [];
+      const bookings = payload.data || [];
+      const pagination = payload.pagination || {};
       bookingsById = new Map(bookings.map((b) => [b.id, b]));
+
       renderBookings();
+
+      if (pagination) {
+        updatePaginationUi(pagination);
+      }
     } catch (error) {
       console.error("Error loading bookings:", error);
       if (loadingEl) loadingEl.hidden = true;
@@ -429,16 +484,72 @@ const hookBookingsCatalog = () => {
     }
   };
 
+  prevBtn?.addEventListener("click", () => {
+    if (currentPage > 1) {
+      loadBookings(currentPage - 1);
+    }
+  });
+
+  nextBtn?.addEventListener("click", () => {
+    if (currentPage < totalPages) {
+      loadBookings(currentPage + 1);
+    }
+  });
+
   const showEditor = (card, booking) => {
     if (!editTemplate) return;
 
     const editor = editTemplate.content.cloneNode(true);
     const form = editor.querySelector("form");
+    if (!form) return;
+
     form.dataset.bookingId = booking.id;
+
+    const idEl = form.querySelector('[data-field="id"]');
+    if (idEl) {
+      idEl.textContent = booking.id || "";
+    }
+
+    const badge = form.querySelector('[data-field="ticket-class-badge"]');
+    if (badge) {
+      badge.textContent = booking.ticketClass || "";
+    }
+
+    const createdEl = form.querySelector('[data-field="created-at"]');
+    if (createdEl) {
+      createdEl.textContent = booking.createdAt
+        ? new Date(booking.createdAt).toLocaleString()
+        : "";
+    }
+
     form.elements.scheduleId.value = booking.scheduleId || "";
     form.elements.tripId.value = booking.tripId || "";
     form.elements.ticketClass.value = booking.ticketClass || "";
     form.elements.selectedDay.value = booking.selectedDay || "";
+
+    // Keep header badge in sync while editing ticket class
+    form.elements.ticketClass.addEventListener("input", () => {
+      if (badge) {
+        badge.textContent = form.elements.ticketClass.value;
+      }
+    });
+
+    const passengersEl = form.querySelector('[data-field="passengers"]');
+    if (passengersEl) {
+      passengersEl.replaceChildren();
+      const passengers = Array.isArray(booking.passengers)
+        ? booking.passengers
+        : Object.values(booking.passengers || {});
+
+      passengers.forEach((passenger) => {
+        const li = document.createElement("li");
+        li.textContent =
+          `${passenger.firstName || ""} ${passenger.lastName || ""} — ` +
+          `${passenger.email || ""} — ${passenger.phone || ""}`;
+        passengersEl.appendChild(li);
+      });
+    }
+
     form.addEventListener("submit", saveBooking);
     card.replaceWith(editor);
     form.elements.scheduleId.focus();
@@ -585,7 +696,7 @@ const hookMyBookings = async () => {
     }
 
     const payload = await response.json();
-    const bookings = payload.bookings || [];
+    const bookings = payload.data || [];
     const fragment = document.createDocumentFragment();
 
     if (bookings.length === 0) {
