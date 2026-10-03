@@ -316,19 +316,60 @@ router.get("/api/stations/:id", getStationById);
  * @openapi
  * /api/trips:
  *   get:
- *     summary: List all trips
- *     description: Returns every scenic trip in the database.
+ *     summary: List trips (paginated)
+ *     description: >
+ *       Returns trips in smaller, page-sized result sets. Results are
+ *       sorted by name (ascending) so page order is stable.
  *     tags:
  *       - Trips
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         required: false
+ *         description: Page number to return (starting at 1)
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         required: false
+ *         description: Number of trips per page (1 to 48)
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *           maximum: 48
+ *           default: 10
  *     responses:
  *       200:
- *         description: All trips
+ *         description: A page of trips with pagination metadata
  *         content:
  *           application/json:
  *             schema:
- *               type: array
- *               items:
- *                 $ref: '#/components/schemas/Trip'
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Trip'
+ *                 pagination:
+ *                   $ref: '#/components/schemas/Pagination'
+ *       400:
+ *         description: Invalid page or limit value
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationError'
+ *       404:
+ *         description: The requested page is past the last page
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: Page 3 does not exist. The last page is 2.
  *       500:
  *         description: Unable to retrieve trips
  *         content:
@@ -337,6 +378,8 @@ router.get("/api/stations/:id", getStationById);
  *               type: object
  *               properties:
  *                 message:
+ *                   type: string
+ *                 error:
  *                   type: string
  */
 router.get("/api/trips", getAllTrips);
