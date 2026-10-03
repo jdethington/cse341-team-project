@@ -3,9 +3,12 @@ import {
     getPaginatedTrips as fetchPaginatedTrips
 } from '../models/trips.js';
 
+// pagination 
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 48;
+
+// Search and filter
 const MAX_SEARCH_LENGTH = 100;
 const ALLOWED_REGIONS = ['central', 'hokkaido', 'kansai', 'northern'];
 const ALLOWED_SEASONS = ['autumn', 'spring', 'summer', 'winter'];
@@ -13,10 +16,12 @@ const ALLOWED_SORT_FIELDS = ['name', 'region', 'season', 'startStation', 'endSta
 const DEFAULT_SORT = 'name';
 const DEFAULT_ORDER = 1;
 
-// Escape the user's search text so it is treated as a literal string, not a
-// regular expression.
+// Sanitize and escape the user's search text so it is treated as a literal string
+// rather than breaking regular expression syntax.
 const escapeRegex = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
+// Parse and validate pagination query parameters (page and limit)
+// to ensure they are safe, positive whole integers.
 const parsePositiveInteger = (value, defaultValue) => {
     if (value === undefined) {
         return defaultValue;
@@ -112,7 +117,8 @@ const parseFilterParams = (query) => {
     return { errors, filter, searchText, sort, order };
 };
 
-// Page Controller: Render EJS Trip Details page
+// Fetch a single trip by its ID and render its HTML details page.
+// Handles 404 Not Found errors if the trip doesn't exist, and catches any server errors.
 export async function renderTripDetails(req, res, next) {
     try {
         const tripId = req.params.id;
