@@ -7,26 +7,30 @@ import Role from "../src/models/schemas/roles.js";
 let sessionCookie;
 
 beforeAll(async () => {
-    // The test database is empty - we need to create roles and a user first
-
-    // Create the roles that the schema expects
     await Role.create({ name: "customer" });
     await Role.create({ name: "admin" });
 
-    // Create an admin user
-    // Note: createUser always assigns customer role
-    // so we need to update the role after creation
     const adminRole = await Role.findOne({ name: "admin" });
-    await createUser("Test Admin", "testadmin", "admin@test.com", "password123");
+    const customerRole = await Role.findOne({ name: "customer" });
 
-    // Update to admin role
+    await createUser("Test Admin", "testadmin", "admin@test.com", "password123");
+    await createUser("Test Customer", "testcustomer", "customer@test.com", "password123");
+    await createUser("Another User", "anotheradmin", "another@test.com", "password123");
+
     const User = (await import("../src/models/schemas/users.js")).default;
+
+    // make testadmin an admin
     await User.findOneAndUpdate(
         { username: "testadmin" },
         { role: adminRole._id }
     );
 
-    // Now log in
+    // make anotheradmin an admin too (so we have 2 admins to test filtering)
+    await User.findOneAndUpdate(
+        { username: "anotheradmin" },
+        { role: adminRole._id }
+    );
+
     const loginResponse = await request(app)
         .post("/login")
         .send({
@@ -34,7 +38,6 @@ beforeAll(async () => {
             password: "password123"
         });
 
-    // Debug - let's see what we got back
     console.log("Login status:", loginResponse.status);
     console.log("Login headers:", loginResponse.headers["set-cookie"]);
 
@@ -76,6 +79,54 @@ describe("GET /api/users", () => {
 
         expect(response.status).toBe(400);
         expect(response.body).toHaveProperty('errors');
+    });
+
+    test("filters by role=admin returns only admin users", async () => {
+        const response = await request(app)
+            .get("/api/users?role=admin")
+            .set("Cookie", sessionCookie);
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toBeInstanceOf(Array);
+        // every returned user should have admin role
+        response.body.data.forEach(user => {
+            expect(user.role.name).toBe("admin");
+        });
+    });
+
+    test("filters by role=customer returns only customer users", async () => {
+        const response = await request(app)
+            .get("/api/users?role=customer")
+            .set("Cookie", sessionCookie);
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toBeInstanceOf(Array);
+        response.body.data.forEach(user => {
+            expect(user.role.name).toBe("customer");
+        });
+    });
+
+    test("returns 400 for invalid role value", async () => {
+        const response = await request(app)
+            .get("/api/users?role=superuser")
+            .set("Cookie", sessionCookie);
+
+        expect(response.status).toBe(400);
+        expect(response.body).toHaveProperty('errors');
+    });
+
+    test.skip("searches by name returns matching users", async () => {
+        // Text search requires a MongoDB text index which is not 
+        // supported in the MongoDB Memory Server test environment.
+        // Verified manually in development.
+    });
+
+    test.skip("search with no matches returns empty array", async () => {
+        // See above
+    });
+
+    test.skip("combines search and role filter", async () => {
+        // See above
     });
 });
 
