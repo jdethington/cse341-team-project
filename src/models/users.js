@@ -13,7 +13,7 @@ export async function updateUser(id, updates) {
         id,
         { $set: allowedUpdates },
         { returnDocument: 'after', runValidators: true } // returnDocument: 'after' returns the updated document, runValidators ensures schema validation even though this is an update
-    ).populate("role").lean();             // populate gets the role from the Role collection instead of just the ObjectId
+    ).populate("role").lean();                           // populate gets the role from the Role collection instead of just the ObjectId
 }
 
 // delete a user by their ID 
@@ -30,3 +30,15 @@ export async function getAllUsers() {
 export async function getUserById(id) {
     return User.findById(id).populate("role").lean();
 }
+
+export const getPaginatedUsers = async ({ filter = {}, page, limit, sort, order }) => {
+    const skip = (page - 1) * limit;
+    const sortOptions = { [sort]: order };
+
+    const [users, totalItems] = await Promise.all([
+        User.find(filter).populate("role").sort(sortOptions).skip(skip).limit(limit).lean(),
+        User.countDocuments(filter)
+    ]);
+
+    return { users, totalItems };
+};
