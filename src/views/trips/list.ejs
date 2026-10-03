@@ -2,7 +2,10 @@
 <h1><%= title %></h1>
 
 <div id="filters">
-    Search by Region:
+    <label for="search-input">Keyword search:</label>
+    <input type="search" id="search-input" name="q" placeholder="Search trip names or descriptions...">
+
+    <label for="region-filter">Search by Region:</label>
     <select id="region-filter">
         <option value="all">All Regions</option>
         <option value="central">Central</option>
@@ -11,7 +14,7 @@
         <option value="northern">Northern</option>
     </select>
 
-    Search by Season:
+    <label for="season-filter">Search by Season:</label>
     <select id="season-filter">
         <option value="all">Any Season</option>
         <option value="autumn">Autumn</option>

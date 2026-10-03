@@ -316,10 +316,14 @@ router.get("/api/stations/:id", getStationById);
  * @openapi
  * /api/trips:
  *   get:
- *     summary: List trips (paginated)
+ *     summary: List trips (paginated, filterable, searchable)
  *     description: >
- *       Returns trips in smaller, page-sized result sets. Results are
- *       sorted by name (ascending) so page order is stable.
+ *       Returns trips in smaller, page-sized result sets. Results can be
+ *       narrowed with a region filter, a season filter, and a keyword search
+ *       that matches either the trip name or the trip description. Filtering
+ *       and search are applied by the server before paging, so the returned
+ *       page and the reported totals always describe the same query. Results
+ *       default to name (ascending) so page order is stable.
  *     tags:
  *       - Trips
  *     parameters:
@@ -340,9 +344,57 @@ router.get("/api/stations/:id", getStationById);
  *           minimum: 1
  *           maximum: 48
  *           default: 10
+ *       - in: query
+ *         name: region
+ *         required: false
+ *         description: >
+ *           Limit results to one region. Matching is case-insensitive.
+ *         schema:
+ *           type: string
+ *           enum: [central, hokkaido, kansai, northern]
+ *       - in: query
+ *         name: season
+ *         required: false
+ *         description: >
+ *           Limit results to the best season for a trip. Matching is
+ *           case-insensitive.
+ *         schema:
+ *           type: string
+ *           enum: [autumn, spring, summer, winter]
+ *       - in: query
+ *         name: q
+ *         required: false
+ *         description: >
+ *           Keyword to search for. Matches any occurrence in the trip name or
+ *           the trip description, ignoring case. Regular expression characters
+ *           are treated as literal text.
+ *         schema:
+ *           type: string
+ *           minLength: 1
+ *           maxLength: 100
+ *         example: Alps
+ *       - in: query
+ *         name: sort
+ *         required: false
+ *         description: Field to sort results by
+ *         schema:
+ *           type: string
+ *           enum: [name, region, season, startStation, endStation, duration]
+ *           default: name
+ *       - in: query
+ *         name: order
+ *         required: false
+ *         description: Sort direction applied to the sort field
+ *         schema:
+ *           type: string
+ *           enum: [asc, desc]
+ *           default: asc
  *     responses:
  *       200:
- *         description: A page of trips with pagination metadata
+ *         description: >
+ *           A page of trips with pagination metadata and the filters that were
+ *           applied. A filter combination that matches nothing returns an
+ *           empty data array with totalItems of 0 rather than an error.
  *         content:
  *           application/json:
  *             schema:
@@ -354,12 +406,44 @@ router.get("/api/stations/:id", getStationById);
  *                     $ref: '#/components/schemas/Trip'
  *                 pagination:
  *                   $ref: '#/components/schemas/Pagination'
+ *                 filters:
+ *                   type: object
+ *                   description: The filters that were applied to this query.
+ *                   properties:
+ *                     region:
+ *                       type: string
+ *                       nullable: true
+ *                       example: central
+ *                     season:
+ *                       type: string
+ *                       nullable: true
+ *                       example: autumn
+ *                     q:
+ *                       type: string
+ *                       nullable: true
+ *                       description: Null when no keyword search was applied.
+ *                       example: Alps
+ *                     sort:
+ *                       type: string
+ *                       example: name
+ *                     order:
+ *                       type: string
+ *                       enum: [asc, desc]
+ *                       example: asc
  *       400:
- *         description: Invalid page or limit value
+ *         description: >
+ *           One or more query parameters were invalid. Every problem found is
+ *           reported in the errors array.
  *         content:
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/ValidationError'
+ *         example:
+ *           errors:
+ *             - field: region
+ *               message: "region must be one of: central, hokkaido, kansai, northern."
+ *             - field: q
+ *               message: Search text must be between 1 and 100 characters.
  *       404:
  *         description: The requested page is past the last page
  *         content:
@@ -371,16 +455,14 @@ router.get("/api/stations/:id", getStationById);
  *                   type: string
  *                   example: Page 3 does not exist. The last page is 2.
  *       500:
- *         description: Unable to retrieve trips
+ *         description: >
+ *           An unexpected server error occurred. The global error handler
+ *           renders the HTML errors/500 page for this response, so API clients
+ *           receive HTML rather than JSON on a 500.
  *         content:
- *           application/json:
+ *           text/html:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 error:
- *                   type: string
+ *               type: string
  */
 router.get("/api/trips", getAllTrips);
 
