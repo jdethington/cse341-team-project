@@ -57,12 +57,15 @@ describe("Trip admin page authorization", () => {
 
 describe("Trip admin API authorization", () => {
     test("keeps the public trip list available", async () => {
-        const response = await request(app).get("/api/trips");
+      const response = await request(app).get("/api/trips");
 
-        expect(response.status).toBe(200);
-        expect(response.headers["content-type"]).toContain("application/json");
-        expect(response.body).toBeInstanceOf(Array);
-        expect(response.body.some((trip) => trip.id === "alpine-panorama")).toBe(true);
+      expect(response.status).toBe(200);
+      expect(response.headers["content-type"]).toContain("application/json");
+      expect(response.body).toHaveProperty("data");
+      expect(response.body.data).toBeInstanceOf(Array);
+      expect(
+        response.body.data.some((trip) => trip.id === "alpine-panorama"),
+      ).toBe(true);
     });
 
     test("rejects signed-out trip updates", async () => {
