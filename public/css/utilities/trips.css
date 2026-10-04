@@ -341,3 +341,84 @@
         font-size: var(--font-size-md);
     }
 }
+
+
+.trips-admin-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    align-items: flex-end;
+    margin-bottom: var(--space-lg);
+    padding: var(--space-md);
+    background-color: var(--clr-surface);
+    border: 1px solid var(--clr-border-light);
+    border-radius: var(--radius-md);
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-xs);
+    }
+
+    label {
+        font-size: var(--font-size-xs);
+        color: var(--clr-text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    select,
+    input[type="search"] {
+        padding: var(--space-sm) var(--space-md);
+        border: 1px solid var(--clr-border-light);
+        border-radius: var(--radius-sm);
+        font-size: var(--font-size-sm);
+        background-color: var(--clr-background);
+        color: var(--clr-text-primary);
+    }
+
+    #filter-search {
+        min-width: 240px;
+    }
+
+    #filter-clear {
+        padding: var(--space-sm) var(--space-md);
+        background-color: var(--clr-surface);
+        color: var(--clr-text-primary);
+        border: 1px solid var(--clr-border-light);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        font-size: var(--font-size-sm);
+
+        &:hover {
+            background-color: var(--clr-background);
+        }
+    }
+}
+
+.trips-admin-pagination {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: var(--space-md);
+    margin-top: var(--space-lg);
+
+    button {
+        padding: var(--space-sm) var(--space-md);
+        border: 1px solid var(--clr-border-light);
+        border-radius: var(--radius-sm);
+        background-color: var(--clr-surface);
+        color: var(--clr-text-primary);
+        cursor: pointer;
+
+        &:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    }
+
+    #trips-page-info {
+        font-size: var(--font-size-sm);
+        color: var(--clr-text-secondary);
+    }
+}
