@@ -53,7 +53,7 @@
         </form>
     </div>
 
-    <table class="trips-admin-table">
+        <table class="trips-admin-table">
         <thead>
             <tr>
                 <th>Trip Name</th>
@@ -65,6 +65,12 @@
         </thead>
         <tbody id="trip-table-body"></tbody>
     </table>
+
+    <div class="trips-admin-pagination" id="trips-pagination">
+        <button type="button" id="trips-prev" disabled>Previous</button>
+        <span id="trips-page-info">Page 1 of 1</span>
+        <button type="button" id="trips-next" disabled>Next</button>
+    </div>
 </section>
 
 <script type="application/json" id="admin-trips-data">
