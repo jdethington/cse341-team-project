@@ -4,6 +4,7 @@
         const grid = document.getElementById('routes-grid');
         const regionFilter = document.getElementById('region-filter');
         const seasonFilter = document.getElementById('season-filter');
+        const searchInput = document.getElementById('search-input');
         const paginationEl = document.getElementById('trips-pagination');
         const pageInfoEl = document.getElementById('trips-page-info');
         const prevBtn = document.getElementById('trips-prev');
@@ -24,8 +25,11 @@
         const regionParam = urlParams.get('region');
         const seasonParam = urlParams.get('season');
 
+        const qParam = urlParams.get('q');
+
         if (regionParam) regionFilter.value = regionParam.toLowerCase();
         if (seasonParam) seasonFilter.value = seasonParam.toLowerCase();
+        if (searchInput && qParam) searchInput.value = qParam;
 
         // Read the requested page from the URL, falling back to the first page
         const readPageFromUrl = () => {
@@ -33,32 +37,92 @@
             return Number.isInteger(requested) && requested >= 1 ? requested : 1;
         };
 
-        // Build a URL for the trips page that keeps the existing filter params
-        const buildUrl = (page) => {
+        // Read the current filter selections straight from the controls
+        const readFilters = () => ({
+            region: regionFilter.value,
+            season: seasonFilter.value,
+            q: searchInput ? searchInput.value.trim() : ''
+        });
+
+        // Build the browser URL so the active filters stay shareable and the
+        // back button can restore them.
+        const buildPageUrl = (page, filters) => {
             const url = new URL(window.location.href);
+
+            if (filters.region !== 'all') url.searchParams.set('region', filters.region);
+            else url.searchParams.delete('region');
+
+            if (filters.season !== 'all') url.searchParams.set('season', filters.season);
+            else url.searchParams.delete('season');
+
+            if (filters.q) url.searchParams.set('q', filters.q);
+            else url.searchParams.delete('q');
+
             url.searchParams.set('page', String(page));
             url.searchParams.set('limit', String(PAGE_SIZE));
             return url;
         };
 
-        // Fetch one page of trips from our API endpoint
-        async function fetchTrips(page) {
+        // Build the API request URL. This must target /api/trips, not the page.
+        const buildApiUrl = (page, filters) => {
             const params = new URLSearchParams();
+
             params.set('page', String(page));
             params.set('limit', String(PAGE_SIZE));
 
+            if (filters.region !== 'all') params.set('region', filters.region);
+            if (filters.season !== 'all') params.set('season', filters.season);
+            if (filters.q) params.set('q', filters.q);
+
+            return `/api/trips?${params.toString()}`;
+        };
+
+        // Fetch one page of trips from our API endpoint
+        async function fetchTrips(page, filters) {
+            const activeFilters = filters || readFilters();
+            const apiUrl = buildApiUrl(page, activeFilters);
+
             try {
-                const response = await fetch(`/api/trips?${params.toString()}`);
-                if (!response.ok) throw new Error('Failed to fetch trips');
+                const response = await fetch(apiUrl, {
+                    headers: { Accept: 'application/json' }
+                });
+
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        // The requested page is past the last page: fall back to
+                        // the last page that does have results.
+                        let lastPage = 0;
+
+                        try {
+                            const payload = await response.json();
+                            lastPage = payload?.pagination?.totalPages || 0;
+                        } catch {
+                            lastPage = 0;
+                        }
+
+                        const error = new Error('Page out of range');
+                        error.fallbackPage = lastPage > 0 && lastPage < page ? lastPage : 1;
+                        throw error;
+                    }
+                    throw new Error(`Failed to fetch trips (${response.status})`);
+                }
 
                 const payload = await response.json();
                 currentTrips = payload.data || [];
                 pagination = payload.pagination || pagination;
 
-                // Run filter immediately after fetching so it respects URL params on load
-                filterTrips();
+                renderTrips(currentTrips);
                 updatePaginationControls();
             } catch (error) {
+                // A stale page after narrowing filters should self-correct
+                // instead of showing a hard error.
+                if (error.fallbackPage) {
+                    const fallbackUrl = buildPageUrl(error.fallbackPage, activeFilters);
+                    history.replaceState(null, '', fallbackUrl.toString());
+                    await fetchTrips(error.fallbackPage, activeFilters);
+                    return;
+                }
+
                 console.error(error);
                 hidePaginationControls();
                 grid.innerHTML = '<p>Error loading trips data.</p>';
@@ -68,7 +132,15 @@
         // Render trips into HTML cards dynamically
         function renderTrips(trips) {
             if (trips.length === 0) {
-                grid.innerHTML = '<p>No trips found.</p>';
+                const hasActiveQuery = pagination.totalItems === 0 && (
+                    regionFilter.value !== 'all' ||
+                    seasonFilter.value !== 'all' ||
+                    (searchInput && searchInput.value.trim())
+                );
+
+                grid.innerHTML = hasActiveQuery
+                    ? '<p>No trips match your filters.</p>'
+                    : '<p>No trips found.</p>';
                 return;
             }
 
@@ -126,41 +198,36 @@
             `).join('');
         }
 
-        // Filter capability with clean URL history updates (no page reload)
-        function filterTrips() {
-            const selectedRegion = regionFilter.value;
-            const selectedSeason = seasonFilter.value;
+        // Filtering happens on the server so the result set is paginated. Any
+        // filter change restarts at page 1, since narrowing can push the old
+        // page number past the end of the results.
+        function applyFilters() {
+            const filters = readFilters();
+            const url = buildPageUrl(1, filters);
+            history.pushState(null, '', url.toString());
+            fetchTrips(1, filters);
+        }
 
-            // Update URL query string smoothly without reloading the page
-            const params = new URLSearchParams();
-            if (selectedRegion !== 'all') params.set('region', selectedRegion);
-            if (selectedSeason !== 'all') params.set('season', selectedSeason);
-            params.set('page', String(pagination.page));
-            params.set('limit', String(PAGE_SIZE));
-            const newPath = window.location.pathname + '?' + params.toString();
-            history.pushState(null, '', newPath);
-
-            const filtered = currentTrips.filter(trip => {
-                const regionVal = trip.region ? trip.region.trim().toLowerCase() : '';
-                const seasonVal = (trip.bestSeason || trip.season) ? (trip.bestSeason || trip.season).trim().toLowerCase() : '';
-
-                const matchesRegion = selectedRegion === 'all' || regionVal === selectedRegion;
-                const matchesSeason = selectedSeason === 'all' || seasonVal === selectedSeason;
-                return matchesRegion && matchesSeason;
-            });
-
-            renderTrips(filtered);
+        // Debounce keyword typing so we do not query on every keystroke.
+        function debounce(callback, wait) {
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => callback(...args), wait);
+            };
         }
 
         // Reflect the server pagination metadata in the controls
         function updatePaginationControls() {
             if (!paginationEl) return;
 
-            const totalPages = pagination.totalPages || 1;
+            const totalPages = pagination.totalPages || 0;
             const currentPage = pagination.page || 1;
 
             if (pageInfoEl) {
-                pageInfoEl.textContent = `Page ${currentPage} of ${totalPages}`;
+                pageInfoEl.textContent = totalPages === 0
+                    ? 'No results'
+                    : `Page ${currentPage} of ${totalPages}`;
             }
 
             if (prevBtn) {
@@ -182,9 +249,10 @@
 
         // Move to another page without a full reload
         function goToPage(page) {
-            const url = buildUrl(page);
+            const filters = readFilters();
+            const url = buildPageUrl(page, filters);
             history.pushState(null, '', url.toString());
-            fetchTrips(page);
+            fetchTrips(page, filters);
         }
 
         prevBtn.addEventListener('click', () => {
@@ -199,14 +267,28 @@
             }
         });
 
-        regionFilter.addEventListener('change', filterTrips);
-        seasonFilter.addEventListener('change', filterTrips);
+        regionFilter.addEventListener('change', applyFilters);
+        seasonFilter.addEventListener('change', applyFilters);
+
+        if (searchInput) {
+            searchInput.addEventListener('input', debounce(applyFilters, 300));
+        }
 
         // Support browser back/forward between visited pages
         window.addEventListener('popstate', () => {
-            fetchTrips(readPageFromUrl());
+            const params = new URLSearchParams(window.location.search);
+            const region = params.get('region');
+            const season = params.get('season');
+            const q = params.get('q');
+
+            // Reflect the restored URL in the controls before refetching.
+            regionFilter.value = region ? region.toLowerCase() : 'all';
+            seasonFilter.value = season ? season.toLowerCase() : 'all';
+            if (searchInput) searchInput.value = q || '';
+
+            fetchTrips(readPageFromUrl(), readFilters());
         });
 
         // Load the requested page of data on page load
-        fetchTrips(readPageFromUrl());
+        fetchTrips(readPageFromUrl(), readFilters());
     });

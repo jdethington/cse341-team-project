@@ -1,4 +1,11 @@
+// Trips Admin page controller
+// Fetches paginated + filtered trip data from /api/trips and renders
+// the admin table, filter bar, pagination controls, and edit form.
+
 document.addEventListener("DOMContentLoaded", () => {
+  // --- DOM references ---
+  // Cached once at page load. Every element this page manipulates is
+  // looked up here so the rest of the code doesn't hit the DOM repeatedly.
   const tableBody = document.getElementById("trip-table-body");
   const editContainer = document.getElementById("edit-form-container");
   const tripForm = document.getElementById("trip-form");
@@ -17,9 +24,19 @@ document.addEventListener("DOMContentLoaded", () => {
   const searchInput = document.getElementById("filter-search");
   const clearButton = document.getElementById("filter-clear");
 
+  // Page size must match what the API is asked for. 10 was chosen
+  // by the assignment spec.
   const PAGE_SIZE = 10;
+
+  // How long to wait after the user stops typing before sending
+  // a search request. Prevents a request per keystroke.
   const SEARCH_DEBOUNCE_MS = 300;
 
+  // --- Reference data (stations + schedules) ---
+  // The server embeds stations and schedules as JSON in the page so the
+  // client can map station ids to names and show schedule options without
+  // extra requests. It is parsed defensively so a malformed blob
+  // doesn't break the whole page.
   const dataEl = document.getElementById("admin-trips-data");
   let referenceData = { stations: [], schedules: [] };
   if (dataEl) {
@@ -39,6 +56,10 @@ document.addEventListener("DOMContentLoaded", () => {
   let trips = [];
   let pagination = null;
 
+  // --- URL state helpers ---
+  // Filters and the current page live in the URL so a view can be
+  // refreshed, bookmarked, or shared and still show the same results.
+
   const getPageFromUrl = () => {
     const params = new URLSearchParams(window.location.search);
     const parsed = Number(params.get("page"));
@@ -57,12 +78,18 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentPage = getPageFromUrl();
   let currentFilters = getFiltersFromUrl();
 
+  // Keeps the dropdowns and search box in sync with whatever is
+  // currently in the URL (used on load and on browser back/forward).
   const applyFiltersToControls = (filters) => {
     regionSelect.value = filters.region;
     seasonSelect.value = filters.season;
     searchInput.value = filters.q;
   };
 
+  // Writes the page and filter values into the URL. `pushState` adds a
+  // history entry (so Back works); `replaceState` updates the current
+  // entry without adding a new one (used when the server returns a
+  // corrected page number, for example).
   const updateUrl = (page, filters, usePush) => {
     const url = new URL(window.location.href);
     const setOrDelete = (key, value) => {
@@ -84,9 +111,12 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
+  // Used to decide which empty-state message to show: "no trips at all"
+  // vs "no trips match your filters".
   const hasActiveFilters = () =>
     Boolean(currentFilters.region || currentFilters.season || currentFilters.q);
 
+  // --- Lookup helpers ---
   const stationName = (id) => {
     const station = stations.find(
       (stationItem) => String(stationItem.id) === String(id),
@@ -112,6 +142,23 @@ document.addEventListener("DOMContentLoaded", () => {
     return `${departure} - ${arrival} (Trip: ${schedule.tripId})`;
   };
 
+  // --- Schedule fetching and rendering ---
+  // Schedules are refreshed on every load so the edit form always has
+  // current schedule options, even after a teammate reassigns one.
+  const fetchSchedules = async () => {
+    try {
+      const response = await fetch("/api/schedules");
+      if (!response.ok) {
+        return null;
+      }
+      const data = await response.json();
+      return Array.isArray(data) ? data : data.schedules || [];
+    } catch (error) {
+      console.error("Error fetching schedules:", error);
+      return null;
+    }
+  };
+
   const renderScheduleOptions = (items, selectedId) => {
     const placeholder = document.createElement("option");
     placeholder.value = "";
@@ -128,20 +175,8 @@ document.addEventListener("DOMContentLoaded", () => {
     scheduleSelect.value = selectedId || "";
   };
 
-  const fetchSchedules = async () => {
-    try {
-      const response = await fetch("/api/schedules");
-      if (!response.ok) {
-        return null;
-      }
-      const data = await response.json();
-      return Array.isArray(data) ? data : data.schedules || [];
-    } catch (error) {
-      console.error("Error fetching schedules:", error);
-      return null;
-    }
-  };
-
+  // Safely extract an error message from an API response. Falls back
+  // to the caller's default if the body is missing or not JSON.
   const getErrorMessage = async (response, fallback) => {
     try {
       const data = await response.json();
@@ -151,6 +186,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
+  // Renders a single-row message inside the table (for loading,
+  // empty, or error states). Using textContent keeps user-supplied
+  // values as text, so no HTML injection is possible.
   const setTableMessage = (message) => {
     tableBody.replaceChildren();
     const row = document.createElement("tr");
@@ -161,6 +199,9 @@ document.addEventListener("DOMContentLoaded", () => {
     tableBody.appendChild(row);
   };
 
+  // Builds one table row per trip using safe DOM methods (createElement
+  // + textContent) instead of innerHTML, so trip names or descriptions
+  // cannot inject markup.
   const renderTrips = (items) => {
     trips = items;
     tableBody.replaceChildren();
@@ -207,6 +248,10 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   };
 
+  // Updates the Previous / Next buttons and the page indicator from the
+  // pagination metadata returned by the API.
+  // Special case: when totalItems is 0, show "No results" instead of
+  // "Page 1 of 0" (which would be confusing).
   const updatePaginationControls = () => {
     if (!paginationEl) {
       return;
@@ -224,8 +269,14 @@ document.addEventListener("DOMContentLoaded", () => {
     nextBtn.disabled = !pagination.hasNextPage;
   };
 
+  // --- Main data load ---
+  // Fetches one page of trips (with active filters applied) and one
+  // list of schedules in parallel. Uses the API's pagination metadata
+  // to drive the page indicator and button state.
   const loadTrips = async (page = currentPage, selectedScheduleId = "") => {
     try {
+      // Build the query string. Filters are only added when set, so
+      // the URL stays short for the common unfiltered case.
       const params = new URLSearchParams();
       params.set("page", String(page));
       params.set("limit", String(PAGE_SIZE));
@@ -238,11 +289,15 @@ document.addEventListener("DOMContentLoaded", () => {
         fetchSchedules(),
       ]);
 
+      // 401 means the session expired. Send the user to login.
       if (tripsResponse.status === 401) {
         window.location.assign("/login");
         return;
       }
 
+      // 404 from this endpoint means "page past the last page". If the
+      // user was on a later page (e.g. they deleted trips and now the
+      // page is empty), fall back one page and retry.
       if (tripsResponse.status === 404) {
         if (page > 1) {
           const fallback = page - 1;
@@ -257,6 +312,7 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      // 400 means an invalid page, limit, or filter value was sent.
       if (tripsResponse.status === 400) {
         setTableMessage("Invalid filter or page request.");
         pagination = null;
@@ -275,6 +331,9 @@ document.addEventListener("DOMContentLoaded", () => {
         renderScheduleOptions(schedules, selectedScheduleId);
       }
 
+      // The API returns { data, pagination }. Using the response's own
+      // page value keeps the client aligned with what the server
+      // actually returned (for example, after a fallback).
       trips = Array.isArray(data.data) ? data.data : [];
       pagination = data.pagination || null;
       currentPage = pagination ? pagination.page : page;
@@ -289,6 +348,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
+  // --- Edit form ---
   const openEditor = (trip) => {
     const tripSchedules = schedulesForTrip(trip.id);
     tripIdInput.value = String(trip.id);
@@ -318,6 +378,8 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
       }
 
+      // Reload the current page so the deleted row disappears. If the
+      // page is now empty, the 404 fallback in loadTrips will step back.
       await loadTrips(currentPage);
     } catch (error) {
       console.error("Delete error:", error);
@@ -325,6 +387,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
+  // --- Filter handling ---
+  // Called whenever a filter control changes. Resets to page 1 because
+  // narrowing the result set can push the current page past the end.
+  // pushState is used so Back returns to the previous filter state.
   const applyFilterChange = () => {
     currentFilters = {
       region: regionSelect.value,
@@ -336,6 +402,9 @@ document.addEventListener("DOMContentLoaded", () => {
     loadTrips(1);
   };
 
+  // --- Event listeners ---
+  // Edit/Delete buttons are handled with one listener on the table body
+  // (event delegation), so listeners survive every table re-render.
   tableBody.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-action]");
     if (!button) {
@@ -416,15 +485,19 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Dropdowns apply filters immediately.
   regionSelect.addEventListener("change", applyFilterChange);
   seasonSelect.addEventListener("change", applyFilterChange);
 
+  // Search box is debounced: each keystroke resets a short timer, and
+  // the request fires only after the user pauses typing.
   let searchTimer = null;
   searchInput.addEventListener("input", () => {
     clearTimeout(searchTimer);
     searchTimer = setTimeout(applyFilterChange, SEARCH_DEBOUNCE_MS);
   });
 
+  // Clear resets every control and re-fetches page 1 with no filters.
   clearButton.addEventListener("click", () => {
     regionSelect.value = "";
     seasonSelect.value = "";
@@ -432,6 +505,8 @@ document.addEventListener("DOMContentLoaded", () => {
     applyFilterChange();
   });
 
+  // Browser back / forward: re-read the URL and restore the state
+  // before fetching.
   window.addEventListener("popstate", () => {
     currentFilters = getFiltersFromUrl();
     currentPage = getPageFromUrl();
@@ -439,6 +514,9 @@ document.addEventListener("DOMContentLoaded", () => {
     loadTrips(currentPage);
   });
 
+  // --- Initial load ---
+  // Restore controls from the URL (supports refresh and shared links)
+  // then fetch the first page.
   applyFiltersToControls(currentFilters);
   loadTrips(currentPage);
 });
