@@ -23,16 +23,29 @@
             </nav>
         </section>
 
-        <div class="bookings-grid" id="bookings-list"></div>
+        <form id="bookings-filters" class="bookings-filters" aria-label="Filter bookings">
+            <label>
+                Ticket class
+                <select name="ticketClass" id="filter-ticket-class">
+                    <option value="">All</option>
+                    <option value="standard">Standard</option>
+                    <option value="premium">Premium</option>
+                    <option value="first">First</option>
+                </select>
+            </label>
+            <label>
+                From
+                <input type="date" name="dateFrom" id="filter-date-from">
+            </label>
+            <label>
+                To
+                <input type="date" name="dateTo" id="filter-date-to">
+            </label>
+            <button type="submit">Apply</button>
+            <button type="button" id="filter-clear">Clear</button>
+        </form>
 
-        <!-- <section class="bookings-toolbar bookings-toolbar--bottom" aria-label="Booking list pagination">
-            <p class="bookings-page-info" id="bookings-page-info" hidden></p>
-            <nav class="bookings-pagination" id="bookings-pagination" hidden>
-                <button type="button" id="bookings-prev" data-action="prev-page">Previous</button>
-                <span id="bookings-page-label"></span>
-                <button type="button" id="bookings-next" data-action="next-page">Next</button>
-            </nav>
-        </section> -->
+        <div class="bookings-grid" id="bookings-list"></div>
 
         <template id="booking-card-template">
             <article class="booking-card" data-booking-id="">
@@ -60,6 +73,10 @@
                     <div class="booking-detail">
                         <dt>Travel day</dt>
                         <dd data-field="selected-day"></dd>
+                    </div>
+                    <div class="booking-detail">
+                        <dt>Ticket class</dt>
+                        <dd data-field="ticket-class"></dd>
                     </div>
                 </dl>
 

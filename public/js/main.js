@@ -199,28 +199,39 @@ const hookTrainsControls = () => {
   const orderEl = document.getElementById("trains-order");
 
   if (powerEl) {
-    powerEl.addEventListener("change", () => applyTrainsParam("powerSource", powerEl.value));
+    powerEl.addEventListener("change", () =>
+      applyTrainsParam("powerSource", powerEl.value),
+    );
   }
 
   if (sortEl) {
-    sortEl.addEventListener("change", () => applyTrainsParam("sort", sortEl.value));
+    sortEl.addEventListener("change", () =>
+      applyTrainsParam("sort", sortEl.value),
+    );
   }
 
   const limitEl = document.getElementById("trains-limit");
 
   if (limitEl) {
-    limitEl.addEventListener("change", () => applyTrainsParam("limit", limitEl.value));
+    limitEl.addEventListener("change", () =>
+      applyTrainsParam("limit", limitEl.value),
+    );
   }
 
   if (orderEl) {
-    orderEl.addEventListener("change", () => applyTrainsParam("order", orderEl.value));
+    orderEl.addEventListener("change", () =>
+      applyTrainsParam("order", orderEl.value),
+    );
   }
 
   if (searchEl) {
     let debounceTimer = null;
     const handleSearch = () => {
       clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => applyTrainsParam("q", searchEl.value.trim()), 300);
+      debounceTimer = setTimeout(
+        () => applyTrainsParam("q", searchEl.value.trim()),
+        300,
+      );
     };
 
     searchEl.addEventListener("input", handleSearch);
@@ -436,6 +447,20 @@ const hookBookingsCatalog = () => {
     listEl.replaceChildren(fragment);
   };
 
+  const getQueryParams = () => {
+    const params = new URLSearchParams({
+      page: String(currentPage),
+      limit: String(pageLimit),
+    });
+    const ticketClass = document.getElementById("filter-ticket-class")?.value;
+    const dateFrom = document.getElementById("filter-date-from")?.value;
+    const dateTo = document.getElementById("filter-date-to")?.value;
+    if (ticketClass) params.set("ticketClass", ticketClass);
+    if (dateFrom) params.set("dateFrom", dateFrom);
+    if (dateTo) params.set("dateTo", dateTo);
+    return params;
+  };
+
   const loadBookings = async (page = currentPage) => {
     if (loadingEl) loadingEl.hidden = false;
     if (errorEl) errorEl.hidden = true;
@@ -450,10 +475,9 @@ const hookBookingsCatalog = () => {
     });
 
     try {
-      const response = await fetch(`/api/bookings?${params}`, {
+      const response = await fetch(`/api/bookings?${getQueryParams()}`, {
         credentials: "same-origin",
       });
-
       if (response.status === 401) {
         window.location.href = "/login";
         return;
@@ -467,6 +491,20 @@ const hookBookingsCatalog = () => {
       const bookings = payload.data || [];
       const pagination = payload.pagination || {};
       bookingsById = new Map(bookings.map((b) => [b.id, b]));
+
+      document
+        .getElementById("bookings-filters")
+        ?.addEventListener("submit", (e) => {
+          e.preventDefault();
+          currentPage = 1;
+          loadBookings(1);
+        });
+
+      document.getElementById("filter-clear")?.addEventListener("click", () => {
+        document.getElementById("bookings-filters")?.reset();
+        currentPage = 1;
+        loadBookings(1);
+      });
 
       renderBookings();
 

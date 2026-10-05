@@ -170,6 +170,56 @@ describe("GET /api/bookings pagination", () => {
   });
 });
 
+describe("GET /api/bookings filters", () => {
+  test("filters by ticketClass", async () => {
+    await getDb()
+      .collection("bookings")
+      .insertMany([
+        {
+          id: "FILTSTD",
+          createdAt: "2026-09-15T12:00:00.000Z",
+          scheduleId: "1",
+          tripId: "alpine-panorama",
+          ticketClass: "standard",
+          selectedDay: "monday",
+          passengers: [
+            { firstName: "A", lastName: "B", email: "a@ex.com", phone: "1" },
+          ],
+        },
+        {
+          id: "FILTPREM",
+          createdAt: "2026-09-16T12:00:00.000Z",
+          scheduleId: "1",
+          tripId: "alpine-panorama",
+          ticketClass: "premium",
+          selectedDay: "monday",
+          passengers: [
+            { firstName: "C", lastName: "D", email: "c@ex.com", phone: "1" },
+          ],
+        },
+      ]);
+
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent.get(
+      "/api/bookings?ticketClass=premium&limit=50",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.data.every((b) => b.ticketClass === "premium")).toBe(
+      true,
+    );
+    expect(response.body.query.ticketClass).toBe("premium");
+  });
+
+  test("rejects inverted date range with 400", async () => {
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent.get(
+      "/api/bookings?dateFrom=2026-09-30&dateTo=2026-09-01",
+    );
+    expect(response.status).toBe(400);
+  });
+});
+
 describe("Bookings admin page", () => {
   test("redirects to login when not authenticated", async () => {
     const response = await request(app).get("/bookings-admin");
