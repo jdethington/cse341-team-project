@@ -6,6 +6,41 @@
         <p>Manage railway trips, reassign stations or schedules, or remove outdated entries.</p>
     </div>
 
+        <div class="trips-admin-filters" id="trips-filters">
+        <div class="filter-group">
+            <label for="filter-region">Region:</label>
+            <select id="filter-region">
+                <option value="">All Regions</option>
+                <option value="central">Central</option>
+                <option value="northern">Northern</option>
+                <option value="kansai">Kansai</option>
+                <option value="hokkaido">Hokkaido</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="filter-season">Season:</label>
+            <select id="filter-season">
+                <option value="">All Seasons</option>
+                <option value="spring">Spring</option>
+                <option value="summer">Summer</option>
+                <option value="autumn">Autumn</option>
+                <option value="winter">Winter</option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="filter-search">Search:</label>
+            <input
+                type="search"
+                id="filter-search"
+                placeholder="Search trip names or descriptions"
+            >
+        </div>
+
+        <button type="button" id="filter-clear">Clear Filters</button>
+    </div>
+
     <div id="edit-form-container" class="trips-edit-form" hidden>
         <h2>Edit Trip Details</h2>
         <form id="trip-form">
@@ -65,6 +100,11 @@
         </thead>
         <tbody id="trip-table-body"></tbody>
     </table>
+    <div class="trips-admin-pagination" id="trips-pagination">
+        <button type="button" id="trips-prev" disabled>Previous</button>
+        <span id="trips-page-info">Page 1 of 1</span>
+        <button type="button" id="trips-next" disabled>Next</button>
+    </div>
 </section>
 
 <script type="application/json" id="admin-trips-data">
