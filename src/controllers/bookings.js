@@ -192,14 +192,12 @@ export async function getAllBookings(req, res) {
         errors: `Page ${page} does not exist. Total pages: ${totalPages}.`,
       });
     }
-    const query = {
-      sort: "createdAt",
-      order: "desc",
-    };
 
-    if (filter.ticketClass) query.ticketClass = filter.ticketClass;
-    if (filter.dateFrom) query.dateFrom = String(req.query.dateFrom);
-    if (filter.dateTo) query.dateTo = String(req.query.dateTo);
+    const filters = {};
+
+    if (filter.ticketClass) filters.ticketClass = filter.ticketClass;
+    if (req.query.dateFrom) filters.dateFrom = String(req.query.dateFrom);
+    if (req.query.dateTo) filters.dateTo = String(req.query.dateTo);
 
     return res.status(200).json({
       data: bookings,
@@ -211,7 +209,9 @@ export async function getAllBookings(req, res) {
         hasNextPage: page * limit < totalItems,
         hasPreviousPage: page > 1,
       },
-      query,
+      meta: {
+        filters,
+      },
     });
   } catch (error) {
     console.error("Error fetching bookings:", error);

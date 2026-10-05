@@ -469,11 +469,6 @@ const hookBookingsCatalog = () => {
 
     currentPage = page;
 
-    const params = new URLSearchParams({
-      page: String(currentPage),
-      limit: String(pageLimit),
-    });
-
     try {
       const response = await fetch(`/api/bookings?${getQueryParams()}`, {
         credentials: "same-origin",
@@ -492,20 +487,6 @@ const hookBookingsCatalog = () => {
       const pagination = payload.pagination || {};
       bookingsById = new Map(bookings.map((b) => [b.id, b]));
 
-      document
-        .getElementById("bookings-filters")
-        ?.addEventListener("submit", (e) => {
-          e.preventDefault();
-          currentPage = 1;
-          loadBookings(1);
-        });
-
-      document.getElementById("filter-clear")?.addEventListener("click", () => {
-        document.getElementById("bookings-filters")?.reset();
-        currentPage = 1;
-        loadBookings(1);
-      });
-
       renderBookings();
 
       if (pagination) {
@@ -521,6 +502,20 @@ const hookBookingsCatalog = () => {
       }
     }
   };
+
+  document
+    .getElementById("bookings-filters")
+    ?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      currentPage = 1;
+      loadBookings(1);
+    });
+
+  document.getElementById("filter-clear")?.addEventListener("click", () => {
+    document.getElementById("bookings-filters")?.reset();
+    currentPage = 1;
+    loadBookings(1);
+  });
 
   prevBtn?.addEventListener("click", () => {
     if (currentPage > 1) {
