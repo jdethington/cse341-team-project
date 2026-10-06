@@ -82,20 +82,18 @@ function buildBookingFilter(req) {
     const createdAt = {};
 
     if (dateFrom) {
-      const from = new Date(dateFrom);
+      const from = new Date(`${dateFrom}T00:00:00.000Z`);
       if (Number.isNaN(from.getTime())) {
         return { error: "dateFrom must be a valid date (YYYY-MM-DD)." };
       }
-      from.setHours(0, 0, 0, 0);
       createdAt.$gte = from.toISOString();
     }
 
     if (dateTo) {
-      const to = new Date(dateTo);
+      const to = new Date(`${dateTo}T23:59:59.999Z`);
       if (Number.isNaN(to.getTime())) {
         return { error: "dateTo must be a valid date (YYYY-MM-DD)." };
       }
-      to.setHours(23, 59, 59, 999);
       createdAt.$lte = to.toISOString();
     }
 
@@ -209,9 +207,7 @@ export async function getAllBookings(req, res) {
         hasNextPage: page * limit < totalItems,
         hasPreviousPage: page > 1,
       },
-      meta: {
-        filters,
-      },
+      filters,
     });
   } catch (error) {
     console.error("Error fetching bookings:", error);

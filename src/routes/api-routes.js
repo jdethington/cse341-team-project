@@ -468,22 +468,19 @@ router.get("/api/trips/:id", getTripById);
  *                       type: boolean
  *                     hasPreviousPage:
  *                       type: boolean
- *                 meta:
- *                   type: object
- *                   properties:
- *                     filters:
- *                       type: object
- *                       description: Echo of applied filters (omitted keys were not supplied)
- *                       properties:
- *                         ticketClass:
- *                           type: string
- *                           example: premium
- *                         dateFrom:
- *                           type: string
- *                           example: "2026-09-01"
- *                         dateTo:
- *                           type: string
- *                           example: "2026-09-30"
+ *                   filters:
+ *                     type: object
+ *                     description: Echo of applied filters (omitted keys were not supplied)
+ *                     properties:
+ *                       ticketClass:
+ *                         type: string
+ *                         example: premium
+ *                       dateFrom:
+ *                         type: string
+ *                         example: "2026-09-01"
+ *                       dateTo:
+ *                         type: string
+ *                         example: "2026-09-30"
  *       400:
  *         description: Invalid pagination or filter parameters
  *       401:

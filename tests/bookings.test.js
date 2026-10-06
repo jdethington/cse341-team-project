@@ -205,12 +205,11 @@ describe("GET /api/bookings filters", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty("meta");
-    expect(response.body.meta).toHaveProperty("filters");
+    expect(response.body).toHaveProperty("filters");
     expect(response.body.data.every((b) => b.ticketClass === "premium")).toBe(
       true,
     );
-    expect(response.body.meta.filters.ticketClass).toBe("premium");
+    expect(response.body.filters.ticketClass).toBe("premium");
   });
 
   test("unknown ticketClass returns empty data with valid pagination", async () => {
@@ -259,14 +258,14 @@ describe("GET /api/bookings filters", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty("meta");
-    expect(response.body.meta).toHaveProperty("filters");
+    expect(response.body).toHaveProperty("filters");
+    expect(response.body.filters).toHaveProperty("dateFrom");
     expect(
       response.body.data.every(
         (b) => new Date(b.createdAt) >= new Date("2026-09-15T00:00:00.000Z"),
       ),
     ).toBe(true);
-    expect(response.body.meta.filters.dateFrom).toBe("2026-09-15");
+    expect(response.body.filters.dateFrom).toBe("2026-09-15");
   });
 
   test("filters by dateTo only", async () => {
@@ -308,7 +307,7 @@ describe("GET /api/bookings filters", () => {
         (b) => new Date(b.createdAt) <= new Date("2026-09-15T23:59:59.999Z"),
       ),
     ).toBe(true);
-    expect(response.body.meta.filters.dateTo).toBe("2026-09-15");
+    expect(response.body.filters.dateTo).toBe("2026-09-15");
   });
 
   test("filters by date range (inclusive)", async () => {
@@ -356,15 +355,16 @@ describe("GET /api/bookings filters", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty("meta");
-    expect(response.body.meta).toHaveProperty("filters");
+    expect(response.body).toHaveProperty("filters");
+    expect(response.body.filters).toHaveProperty("dateFrom");
+    expect(response.body.filters).toHaveProperty("dateTo");
     expect(response.body.data).toEqual(
       expect.arrayContaining([expect.objectContaining({ id: "RANGE2" })]),
     );
     expect(response.body.data.every((b) => b.id !== "RANGE1")).toBe(true);
     expect(response.body.data.every((b) => b.id !== "RANGE3")).toBe(true);
-    expect(response.body.meta.filters.dateFrom).toBe("2026-09-10");
-    expect(response.body.meta.filters.dateTo).toBe("2026-09-20");
+    expect(response.body.filters.dateFrom).toBe("2026-09-10");
+    expect(response.body.filters.dateTo).toBe("2026-09-20");
   });
 
   test("rejects inverted date range with 400", async () => {
@@ -421,14 +421,15 @@ describe("GET /api/bookings filters", () => {
     );
 
     expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty("meta");
-    expect(response.body.meta).toHaveProperty("filters");
+    expect(response.body).toHaveProperty("filters");
+    expect(response.body.filters).toHaveProperty("dateFrom");
+    expect(response.body.filters).toHaveProperty("dateTo");
     expect(response.body.data.every((b) => b.ticketClass === "premium")).toBe(
       true,
     );
-    expect(response.body.meta.filters.ticketClass).toBe("premium");
-    expect(response.body.meta.filters.dateFrom).toBe("2026-09-01");
-    expect(response.body.meta.filters.dateTo).toBe("2026-09-30");
+    expect(response.body.filters.ticketClass).toBe("premium");
+    expect(response.body.filters.dateFrom).toBe("2026-09-01");
+    expect(response.body.filters.dateTo).toBe("2026-09-30");
   });
 });
 
