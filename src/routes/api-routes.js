@@ -790,7 +790,6 @@ router.get("/api/trips/:id/schedules", getSchedulesForTrip);
  *         description: Searches name, email, and username
  *         schema:
  *           type: string
- *           default: username
  *       - in: query
  *         name: role
  *         required: false
@@ -798,7 +797,7 @@ router.get("/api/trips/:id/schedules", getSchedulesForTrip);
  *         schema:
  *           type: string
  *         enum: [admin, customer]
- *         default: customer
+ *         omit: all roles
  *     responses:
  *       200:
  *         description: User list returned successfully

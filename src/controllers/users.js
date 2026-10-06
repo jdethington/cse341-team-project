@@ -127,7 +127,7 @@ export async function getUsers(req, res, next) {
             errors.push({
                 field: 'q',
                 message: 'Search text cannot be empty.'
-            })
+            });
         }
 
         if (page === null) {
