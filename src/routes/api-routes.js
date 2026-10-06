@@ -784,6 +784,20 @@ router.get("/api/trips/:id/schedules", getSchedulesForTrip);
  *           minimum: 1
  *           maximum: 50
  *           default: 10
+ *       - in: query
+ *         name: q
+ *         required: false
+ *         description: Searches name, email, and username
+ *         schema:
+ *           type: string
+ *       - in: query
+ *         name: role
+ *         required: false
+ *         description: Filter by role (admin or customer)
+ *         schema:
+ *           type: string
+ *         enum: [admin, customer]
+ *         omit: all roles
  *     responses:
  *       200:
  *         description: User list returned successfully

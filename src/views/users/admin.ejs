@@ -11,6 +11,23 @@
                     <p class="page-subtitle">Your account information.</p>
                     <% } %>
         </div>
+
+        <div class="users-toolbar">
+            <div class="users-toolbar-group">
+                <label for="users-search">Search</label>
+                <input type="search" id="users-search" name="q" placeholder="Search users...">
+                <button type="button" id="users-search-btn">Search</button>
+            </div>
+
+            <div class="users-toolbar-group">
+                <label for="users-role">Role</label>
+                <select id="users-role" name="role">
+                    <option value="">All Roles</option>
+                    <option value="customer">Customer</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+        </div>
         <!-- Users list - populated by client-side JavaScript -->
         <div id="users-list">
             <p>Loading users...</p>
@@ -52,14 +69,31 @@
         const CURRENT_USER_ID = '<%= currentUser.id %>';
         const CURRENT_USER_ROLE = '<%= currentUser.role %>';
 
+        // pre-fill inputs from URL on page load
+        const params = new URLSearchParams(window.location.search);
+        document.getElementById('users-search').value = params.get('q') || '';
+        document.getElementById('users-role').value = params.get('role') || '';
+
         // fetch users from API 
         async function fetchAndRenderUsers() {
             try {
                 // read current page from URL (?page=2) or default to 1
                 const params = new URLSearchParams(window.location.search);
                 const page = params.get('page') || '1';
+                const q = params.get('q') || '';
+                const role = params.get('role') || '';
 
-                const response = await fetch(`/api/users?page=${page}&limit=10&sort=username&order=asc`);
+                // build the URL conditionally with only the parameters that have values
+                const apiParams = new URLSearchParams();
+                apiParams.set('page', page);
+                apiParams.set('limit', '10');
+                apiParams.set('sort', 'username');
+                apiParams.set('order', 'asc');
+                if (q) { apiParams.set('q', q); }
+                if (role) { apiParams.set('role', role); }
+
+                const response = await fetch(`/api/users?${apiParams.toString()}`);
+
                 if (!response.ok) {
                     throw new Error('Failed to fetch users');
                 }
@@ -152,6 +186,22 @@
             window.location.href = url.toString();
         }
 
+        function goToSearch(q, role) {
+            const url = new URL(window.location.href);
+            if (q) {
+                url.searchParams.set('q', q);
+            } else {
+                url.searchParams.delete('q');
+            }
+            if (role) {
+                url.searchParams.set('role', role);
+            } else {
+                url.searchParams.delete('role');
+            }
+            url.searchParams.set('page', String(1)); // reset to first page on new search
+            window.location.href = url.toString();
+        }
+
         function hookPagination() {
             const prevBtn = document.getElementById('users-prev');
             const nextBtn = document.getElementById('users-next');
@@ -169,6 +219,38 @@
                     const params = new URLSearchParams(window.location.search);
                     const page = Number(params.get('page') || '1') + 1;
                     goToPage(page);
+                });
+            }
+        }
+
+        function hookSearchAndFilter() {
+            const searchInput = document.getElementById('users-search');
+            const searchBtn = document.getElementById('users-search-btn');
+            const roleSelect = document.getElementById('users-role');
+
+            if (searchBtn) {
+                searchBtn.addEventListener('click', () => {
+                    const q = searchInput.value.trim();
+                    const role = roleSelect.value;
+                    goToSearch(q, role);
+                });
+            }
+
+            if (roleSelect) {
+                roleSelect.addEventListener('change', () => {
+                    const q = searchInput.value.trim();
+                    const role = roleSelect.value;
+                    goToSearch(q, role);
+                });
+            }
+
+            if (searchInput) {
+                searchInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {                        // only search if enter is pressed, not on every keystroke
+                        const q = searchInput.value.trim();
+                        const role = roleSelect.value;
+                        goToSearch(q, role);
+                    }
                 });
             }
         }
@@ -242,6 +324,7 @@
 
         // wire up pagination buttons and load users
         hookPagination();
+        hookSearchAndFilter();
         fetchAndRenderUsers();
     </script>
 

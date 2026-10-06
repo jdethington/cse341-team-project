@@ -3,7 +3,8 @@ import {
     updateUser,
     deleteUserById,
     getUserById,
-    getPaginatedUsers
+    getPaginatedUsers,
+    getRoleId
 } from "../models/users.js";
 
 // Renders the user admin page
@@ -75,6 +76,7 @@ const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
 const MAX_LIMIT = 50;
 const allowedSortFields = ['username', 'name', 'email'];
+const allowedFilterFields = ['admin', 'customer'];
 
 const parsePositiveInteger = (value, defaultValue) => {
     if (value === undefined) return defaultValue;
@@ -89,7 +91,6 @@ export async function getUsers(req, res, next) {
         // console.log('getUsers called, role:', currentUser.role); // for troubleshooting
         // console.log('query params:', req.query);
 
-
         // customers always get only their own record — no pagination needed
         if (currentUser.role !== "admin") {
             // console.log('returning customer view');
@@ -103,6 +104,31 @@ export async function getUsers(req, res, next) {
 
         const page = parsePositiveInteger(req.query.page, DEFAULT_PAGE);
         const requestedLimit = parsePositiveInteger(req.query.limit, DEFAULT_LIMIT);
+
+        // validate query parameters - role
+        if (req.query.role && !allowedFilterFields.includes(req.query.role)) {
+            errors.push({
+                field: 'role',
+                message: `role must be one of: ${allowedFilterFields.join(', ')}.`
+            });
+        }
+
+        // validate query parameters - q
+        if (req.query.q && typeof req.query.q !== "string") {
+            errors.push({
+                field: 'q',
+                message: `q must be a string.`
+            });
+        }
+
+        const searchText = req.query.q?.trim();
+
+        if (searchText !== undefined && searchText.length === 0) {
+            errors.push({
+                field: 'q',
+                message: 'Search text cannot be empty.'
+            });
+        }
 
         if (page === null) {
             errors.push({
@@ -137,9 +163,23 @@ export async function getUsers(req, res, next) {
         const limit = requestedLimit;
         const sort = req.query.sort || 'username';
         const order = req.query.order === 'desc' ? -1 : 1;
+        const filter = {};
+        const role = req.query.role;
+
+        if (role) {
+            const roleId = await getRoleId(role);
+            if (!roleId) {
+                return res.status(400).json({ error: `Role '${role}' does not exist.` });
+            }
+            filter.role = roleId._id;
+        }
+
+        if (searchText) {
+            filter.$text = { $search: searchText };
+        }
 
         const { users, totalItems } = await getPaginatedUsers({
-            filter: {},
+            filter: filter,
             page,
             limit,
             sort,

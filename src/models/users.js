@@ -1,5 +1,6 @@
 // src/models/users.js
 import User from "./schemas/users.js";
+import Role from "./schemas/roles.js";
 
 // update a user by their ID (used for account updates).
 export async function updateUser(id, updates) {
@@ -42,3 +43,7 @@ export const getPaginatedUsers = async ({ filter = {}, page, limit, sort, order 
 
     return { users, totalItems };
 };
+
+export async function getRoleId(roleName) {
+    return Role.findOne({ name: roleName }).lean();
+}
