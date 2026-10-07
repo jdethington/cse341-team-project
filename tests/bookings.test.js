@@ -132,7 +132,259 @@ describe("Bookings API read tests", () => {
     expect(response.body.data.every((b) => b.id !== "ME-OTHER")).toBe(true);
   });
 });
-// END********************************************************************
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+// START********************************************************************
+
+describe("Bookings API write tests", () => {
+  // 1**********************************************************************
+  test("PUT /api/bookings/:id returns 401 when not authenticated", async () => {
+    const response = await request(app)
+      .put("/api/bookings/any-id")
+      .send({ ticketClass: "premium" });
+    expect(response.status).toBe(401);
+  });
+  // 2**********************************************************************
+  test("PUT /api/bookings/:id returns 404 for unknown id", async () => {
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent
+      .put("/api/bookings/unknown-id")
+      .send({ ticketClass: "premium" });
+    expect(response.status).toBe(404);
+  });
+  // 3**********************************************************************
+  test("PUT /api/bookings/:id allows passenger to update; DB reflects change", async () => {
+    await getDb()
+      .collection("bookings")
+      .insertOne({
+        id: "ME-MINE",
+        createdAt: new Date().toISOString(),
+        scheduleId: "1",
+        tripId: "alpine-panorama",
+        ticketClass: "standard",
+        selectedDay: "monday",
+        passengers: [
+          {
+            firstName: "John",
+            lastName: "Doe",
+            email: "customer@example.com",
+            phone: "555-0100",
+          },
+        ],
+      });
+
+    const agent = await loginAs("customer", "customer1#");
+    const response = await agent
+      .put("/api/bookings/ME-MINE")
+      .send({ ticketClass: "premium" });
+
+    expect(response.status).toBe(200);
+
+    const updatedBooking = await getDb()
+      .collection("bookings")
+      .findOne({ id: "ME-MINE" });
+
+    expect(updatedBooking).toBeTruthy();
+    expect(updatedBooking.ticketClass).toBe("premium");
+  });
+  // 4**********************************************************************
+  test("PUT /api/bookings/:id returns 403 for non-owner customer", async () => {
+    await getDb()
+      .collection("bookings")
+      .insertOne({
+        id: "ME-OTHER",
+        createdAt: new Date().toISOString(),
+        scheduleId: "1",
+        tripId: "alpine-panorama",
+        ticketClass: "standard",
+        selectedDay: "monday",
+        passengers: [
+          {
+            firstName: "Jane",
+            lastName: "Doe",
+            email: "jane.doe@example.com",
+            phone: "555-0101",
+          },
+        ],
+      });
+
+    const agent = await loginAs("customer", "customer1#");
+    const response = await agent
+      .put("/api/bookings/ME-OTHER")
+      .send({ ticketClass: "premium" });
+
+    expect(response.status).toBe(403);
+
+    const booking = await getDb()
+      .collection("bookings")
+      .findOne({ id: "ME-OTHER" });
+
+    expect(booking.ticketClass).toBe("standard");
+  });
+  // 5**********************************************************************
+  test("PUT /api/bookings/:id allows admin to update any booking", async () => {
+    await getDb()
+      .collection("bookings")
+      .insertOne({
+        id: "WRITE-PUT-ADMIN",
+        createdAt: new Date().toISOString(),
+        scheduleId: "1",
+        tripId: "alpine-panorama",
+        ticketClass: "standard",
+        selectedDay: "monday",
+        passengers: [
+          {
+            firstName: "Any",
+            lastName: "One",
+            email: "not-admin@example.com",
+            phone: "555-0300",
+          },
+        ],
+      });
+
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent
+      .put("/api/bookings/WRITE-PUT-ADMIN")
+      .send({ ticketClass: "first" });
+
+    expect(response.status).toBe(200);
+
+    const inDb = await getDb()
+      .collection("bookings")
+      .findOne({ id: "WRITE-PUT-ADMIN" });
+
+    expect(inDb.ticketClass).toBe("first");
+  });
+  // 6**********************************************************************
+  test("DELETE /api/bookings/:id returns 401 when not authenticated", async () => {
+    const response = await request(app).delete("/api/bookings/any-id");
+    expect(response.status).toBe(401);
+  });
+  // 7**********************************************************************
+  test("DELETE /api/bookings/:id returns 404 for unknown id", async () => {
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent.delete("/api/bookings/unknown-id");
+    expect(response.status).toBe(404);
+  });
+  // 8**********************************************************************
+  test("DELETE /api/bookings/:id allows passenger to delete; gone from DB", async () => {
+    await getDb()
+      .collection("bookings")
+      .insertOne({
+        id: "WRITE-DELETE-PASS",
+        createdAt: new Date().toISOString(),
+        scheduleId: "1",
+        tripId: "alpine-panorama",
+        ticketClass: "standard",
+        selectedDay: "monday",
+        passengers: [
+          {
+            firstName: "Any",
+            lastName: "One",
+            email: "customer@example.com",
+            phone: "555-0300",
+          },
+        ],
+      });
+
+    const agent = await loginAs("customer", "customer1#");
+    const response = await agent.delete("/api/bookings/WRITE-DELETE-PASS");
+
+    expect(response.status).toBe(200);
+
+    const inDb = await getDb()
+      .collection("bookings")
+      .findOne({ id: "WRITE-DELETE-PASS" });
+
+    expect(inDb).toBeNull();
+  });
+  // 9**********************************************************************
+  test("DELETE /api/bookings/:id returns 403 for non-owner customer", async () => {
+    await getDb()
+      .collection("bookings")
+      .insertOne({
+        id: "WRITE-DELETE-NON-OWNER",
+        createdAt: new Date().toISOString(),
+        scheduleId: "1",
+        tripId: "alpine-panorama",
+        ticketClass: "standard",
+        selectedDay: "monday",
+        passengers: [
+          {
+            firstName: "Any",
+            lastName: "One",
+            email: "not-admin@example.com",
+            phone: "555-0300",
+          },
+        ],
+      });
+
+    const agent = await loginAs("customer", "customer1#");
+    const response = await agent.delete("/api/bookings/WRITE-DELETE-NON-OWNER");
+
+    expect(response.status).toBe(403);
+
+    const inDb = await getDb()
+      .collection("bookings")
+      .findOne({ id: "WRITE-DELETE-NON-OWNER" });
+
+    expect(inDb).toBeTruthy();
+  });
+  // 10*********************************************************************
+  test("DELETE /api/bookings/:id allows admin to delete any booking", async () => {
+    await getDb()
+      .collection("bookings")
+      .insertOne({
+        id: "WRITE-DEL-ADMIN",
+        createdAt: new Date().toISOString(),
+        scheduleId: "1",
+        tripId: "alpine-panorama",
+        ticketClass: "standard",
+        selectedDay: "monday",
+        passengers: [
+          {
+            firstName: "Any",
+            lastName: "One",
+            email: "not-admin@example.com",
+            phone: "555-0300",
+          },
+        ],
+      });
+
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent.delete("/api/bookings/WRITE-DEL-ADMIN");
+
+    expect(response.status).toBe(200);
+
+    const inDb = await getDb()
+      .collection("bookings")
+      .findOne({ id: "WRITE-DEL-ADMIN" });
+
+    expect(inDb).toBeNull();
+  });
+});
+// END**********************************************************************
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
 describe("GET /api/bookings", () => {
   test("returns 401 when not authenticated", async () => {
     const response = await request(app).get("/api/bookings");
