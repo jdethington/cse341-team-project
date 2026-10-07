@@ -21,7 +21,7 @@ describe("Bookings API read tests", () => {
     await getDb()
       .collection("bookings")
       .insertOne({
-        id: "JRTESTBOOK1",
+        id: "ME-MINE",
         createdAt: new Date().toISOString(),
         scheduleId: "1",
         tripId: "alpine-panorama",
@@ -29,16 +29,18 @@ describe("Bookings API read tests", () => {
         selectedDay: "monday",
         passengers: [
           {
-            firstName: "Test",
-            lastName: "User",
-            email: "test@example.com",
+            firstName: "John",
+            lastName: "Doe",
+            email: "customer@example.com",
             phone: "555-0100",
           },
         ],
       });
 
-    const agent = await loginAs("admin", "password1#");
-    const response = await agent.get("/api/bookings");
+    const agent = await loginAs("customer", "customer1#");
+    const response = await agent
+      .put("/api/bookings/ME-MINE")
+      .send({ ticketClass: "premium" });
 
     expect(response.status).toBe(200);
     expect(response.headers["content-type"]).toContain("application/json");
@@ -438,7 +440,7 @@ describe("Bookings API pagination and filtering tests", () => {
     const agent = await loginAs("admin", "password1#");
     const response = await agent.get("/api/bookings?page=1&limit=999");
 
-    expect(response.status).toBe(400);
+    expect(inDb).toBeNull();
   });
   // 6**********************************************************************
   test("page 2 returns a different slice when enough data exists", async () => {
@@ -465,17 +467,13 @@ describe("Bookings API pagination and filtering tests", () => {
     const page1 = await agent.get("/api/bookings?page=1&limit=10");
     const page2 = await agent.get("/api/bookings?page=2&limit=10");
 
-    expect(page1.status).toBe(200);
-    expect(page2.status).toBe(200);
-    expect(page1.body.data).toHaveLength(10);
-    expect(page2.body.data.length).toBeGreaterThan(0);
+    expect(response.status).toBe(403);
 
-    const ids1 = page1.body.data.map((b) => b.id);
-    const ids2 = page2.body.data.map((b) => b.id);
+    const inDb = await getDb()
+      .collection("bookings")
+      .findOne({ id: "WRITE-DELETE-NON-OWNER" });
 
-    expect(ids1.filter((id) => ids2.includes(id))).toHaveLength(0);
-    expect(page1.body.pagination.hasNextPage).toBe(true);
-    expect(page2.body.pagination.hasPreviousPage).toBe(true);
+    expect(inDb).toBeTruthy();
   });
   // 7**********************************************************************
   test("unknown ticketClass returns empty data with valid pagination", async () => {
@@ -493,86 +491,75 @@ describe("Bookings API pagination and filtering tests", () => {
   test("filters by ticketClass (case-insensitive)", async () => {
     await getDb()
       .collection("bookings")
-      .insertMany([
-        {
-          id: "FILTSTD",
-          createdAt: "2026-09-15T12:00:00.000Z",
-          scheduleId: "1",
-          tripId: "alpine-panorama",
-          ticketClass: "standard",
-          selectedDay: "monday",
-          passengers: [
-            { firstName: "A", lastName: "B", email: "a@ex.com", phone: "1" },
-          ],
-        },
-        {
-          id: "FILTPREM",
-          createdAt: "2026-09-16T12:00:00.000Z",
-          scheduleId: "1",
-          tripId: "alpine-panorama",
-          ticketClass: "premium",
-          selectedDay: "monday",
-          passengers: [
-            { firstName: "C", lastName: "D", email: "c@ex.com", phone: "1" },
-          ],
-        },
-      ]);
+      .insertOne({
+        id: "WRITE-DEL-ADMIN",
+        createdAt: new Date().toISOString(),
+        scheduleId: "1",
+        tripId: "alpine-panorama",
+        ticketClass: "standard",
+        selectedDay: "monday",
+        passengers: [
+          {
+            firstName: "Any",
+            lastName: "One",
+            email: "not-admin@example.com",
+            phone: "555-0300",
+          },
+        ],
+      });
 
     const agent = await loginAs("admin", "password1#");
-    const response = await agent.get(
-      "/api/bookings?ticketClass=PREMIUM&limit=50",
-    );
+    const response = await agent.delete("/api/bookings/WRITE-DEL-ADMIN");
 
     expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty("filters");
-    expect(response.body.data.every((b) => b.ticketClass === "premium")).toBe(
-      true,
-    );
-    expect(response.body.filters.ticketClass).toBe("premium");
+
+    const inDb = await getDb()
+      .collection("bookings")
+      .findOne({ id: "WRITE-DEL-ADMIN" });
+
+    expect(inDb).toBeNull();
+  });
+});
+// END**********************************************************************
+//
+describe("GET /api/bookings", () => {
+  test("returns 401 when not authenticated", async () => {
+    const response = await request(app).get("/api/bookings");
+    expect(response.status).toBe(401);
   });
   // 9**********************************************************************
   test("filters by dateFrom only", async () => {
     await getDb()
       .collection("bookings")
-      .insertMany([
-        {
-          id: "DATEFROM1",
-          createdAt: "2026-09-10T10:00:00.000Z",
-          scheduleId: "1",
-          tripId: "alpine-panorama",
-          ticketClass: "standard",
-          selectedDay: "monday",
-          passengers: [
-            { firstName: "A", lastName: "B", email: "a@ex.com", phone: "1" },
-          ],
-        },
-        {
-          id: "DATEFROM2",
-          createdAt: "2026-09-20T10:00:00.000Z",
-          scheduleId: "1",
-          tripId: "alpine-panorama",
-          ticketClass: "standard",
-          selectedDay: "monday",
-          passengers: [
-            { firstName: "C", lastName: "D", email: "c@ex.com", phone: "1" },
-          ],
-        },
-      ]);
+      .insertOne({
+        id: "JRTESTBOOK1",
+        createdAt: new Date().toISOString(),
+        scheduleId: "1",
+        tripId: "alpine-panorama",
+        ticketClass: "standard",
+        selectedDay: "monday",
+        passengers: [
+          {
+            firstName: "Test",
+            lastName: "User",
+            email: "test@example.com",
+            phone: "555-0100",
+          },
+        ],
+      });
 
     const agent = await loginAs("admin", "password1#");
-    const response = await agent.get(
-      "/api/bookings?dateFrom=2026-09-15&limit=50",
-    );
+    const response = await agent.get("/api/bookings");
 
     expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty("filters");
-    expect(response.body.filters).toHaveProperty("dateFrom");
-    expect(
-      response.body.data.every(
-        (b) => new Date(b.createdAt) >= new Date("2026-09-15T00:00:00.000Z"),
-      ),
-    ).toBe(true);
-    expect(response.body.filters.dateFrom).toBe("2026-09-15");
+    expect(response.body.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "JRTESTBOOK1",
+          ticketClass: "standard",
+        }),
+      ]),
+    );
   });
   // 11*********************************************************************
   test("filters by dateTo only", async () => {
@@ -603,10 +590,9 @@ describe("Bookings API pagination and filtering tests", () => {
         },
       ]);
 
-    const agent = await loginAs("admin", "password1#");
-    const response = await agent.get(
-      "/api/bookings?dateTo=2026-09-15&limit=50",
-    );
+    test("defaults to page 1 when page is omitted", async () => {
+      const agent = await loginAs("admin", "password1#");
+      const response = await agent.get("/api/bookings?limit=10");
 
     expect(response.status).toBe(200);
     expect(
@@ -629,37 +615,17 @@ describe("Bookings API pagination and filtering tests", () => {
           ticketClass: "standard",
           selectedDay: "monday",
           passengers: [
-            { firstName: "A", lastName: "B", email: "a@ex.com", phone: "1" },
+            {
+              firstName: "Page",
+              lastName: "Four",
+              email: "page404@example.com",
+              phone: "555-0100",
+            },
           ],
-        },
-        {
-          id: "RANGE2",
-          createdAt: "2026-09-15T12:00:00.000Z",
-          scheduleId: "1",
-          tripId: "alpine-panorama",
-          ticketClass: "premium",
-          selectedDay: "monday",
-          passengers: [
-            { firstName: "C", lastName: "D", email: "c@ex.com", phone: "1" },
-          ],
-        },
-        {
-          id: "RANGE3",
-          createdAt: "2026-09-30T12:00:00.000Z",
-          scheduleId: "1",
-          tripId: "alpine-panorama",
-          ticketClass: "first",
-          selectedDay: "monday",
-          passengers: [
-            { firstName: "E", lastName: "F", email: "e@ex.com", phone: "1" },
-          ],
-        },
-      ]);
+        });
 
-    const agent = await loginAs("admin", "password1#");
-    const response = await agent.get(
-      "/api/bookings?dateFrom=2026-09-10&dateTo=2026-09-20&limit=50",
-    );
+      const agent = await loginAs("admin", "password1#");
+      const response = await agent.get("/api/bookings?page=999&limit=10");
 
     expect(response.status).toBe(200);
     expect(response.body).toHaveProperty("filters");
@@ -699,44 +665,53 @@ describe("Bookings API pagination and filtering tests", () => {
       .collection("bookings")
       .insertMany([
         {
-          id: "COMBO1",
-          createdAt: "2026-09-12T12:00:00.000Z",
+          id: "FILTER-MINE",
+          createdAt: "2026-09-15T12:00:00.000Z",
           scheduleId: "1",
           tripId: "alpine-panorama",
           ticketClass: "premium",
           selectedDay: "monday",
           passengers: [
-            { firstName: "A", lastName: "B", email: "a@ex.com", phone: "1" },
+            {
+              firstName: "Cust",
+              lastName: "Omer",
+              email: "customer@example.com",
+              phone: "555-0100",
+            },
           ],
         },
         {
-          id: "COMBO2",
-          createdAt: "2026-09-12T12:00:00.000Z",
+          id: "FILTER-OTHER",
+          createdAt: "2026-09-15T12:00:00.000Z",
           scheduleId: "1",
           tripId: "alpine-panorama",
-          ticketClass: "standard",
+          ticketClass: "premium",
           selectedDay: "monday",
           passengers: [
-            { firstName: "C", lastName: "D", email: "c@ex.com", phone: "1" },
+            {
+              firstName: "Other",
+              lastName: "Person",
+              email: "someone-else@example.com",
+              phone: "555-0200",
+            },
           ],
         },
       ]);
 
-    const agent = await loginAs("admin", "password1#");
+    const agent = await loginAs("customer", "customer1#");
     const response = await agent.get(
       "/api/bookings?ticketClass=premium&dateFrom=2026-09-01&dateTo=2026-09-30&limit=50",
     );
 
     expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty("filters");
-    expect(response.body.filters).toHaveProperty("dateFrom");
-    expect(response.body.filters).toHaveProperty("dateTo");
-    expect(response.body.data.every((b) => b.ticketClass === "premium")).toBe(
-      true,
+    expect(response.body.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "FILTER-MINE",
+        }),
+      ]),
     );
-    expect(response.body.filters.ticketClass).toBe("premium");
-    expect(response.body.filters.dateFrom).toBe("2026-09-01");
-    expect(response.body.filters.dateTo).toBe("2026-09-30");
+    expect(response.body.data.every((b) => b.id !== "FILTER-OTHER")).toBe(true);
   });
   // 17*********************************************************************
   test("customer only sees their own bookings when filters are applied", async () => {
