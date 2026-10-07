@@ -8,10 +8,9 @@ import {
   deleteBooking as deleteBookingRecord,
 } from "../models/bookings.js";
 import { getAllTicketClasses } from "../models/ticket-classes.js";
-import { getTripById } from "../models/trips.js"; // Uncomment this line when the getTripById function is implemented in the trips model
-import { getScheduleById } from "../models/schedules.js"; // Uncomment this line when the getScheduleById function is implemented in the schedules model
+import { getTripById } from "../models/trips.js";
+import { getScheduleById } from "../models/schedules.js";
 import { generateBookingCode } from "../includes/helpers.js";
-// import { getDb } from "../db/connect.js";
 
 // Helper functions
 function userIsAdmin(user) {
@@ -51,12 +50,14 @@ function parsePositiveInteger(value, defaultValue) {
 }
 
 /**
- * Build base Mongo filter from the signed-in user (role scope).
- * PR 2 will add ticketClass / date filters onto this object.
+ * Build a filter for booking queries based on user role and optional filters.
+ * Role scope + ticketClass / date range filters.
+ * Returns { filter } or { error: string } on validation failure.
  */
 function buildBookingFilter(req) {
   const filter = {};
 
+  // Role scope
   if (!userIsAdmin(req.user)) {
     const email = String(req.user.email || "")
       .trim()
@@ -65,7 +66,45 @@ function buildBookingFilter(req) {
     filter["passengers.email"] = { $regex: new RegExp(`^${email}$`, "i") };
   }
 
-  return filter;
+  // Ticket class
+  if (
+    req.query.ticketClass !== undefined &&
+    String(req.query.ticketClass).trim() !== ""
+  ) {
+    filter.ticketClass = String(req.query.ticketClass).trim().toLowerCase();
+  }
+
+  // Date range on createdAt (ISO strings)
+  const dateFrom = req.query.dateFrom;
+  const dateTo = req.query.dateTo;
+
+  if (dateFrom || dateTo) {
+    const createdAt = {};
+
+    if (dateFrom) {
+      const from = new Date(`${dateFrom}T00:00:00.000Z`);
+      if (Number.isNaN(from.getTime())) {
+        return { error: "dateFrom must be a valid date (YYYY-MM-DD)." };
+      }
+      createdAt.$gte = from.toISOString();
+    }
+
+    if (dateTo) {
+      const to = new Date(`${dateTo}T23:59:59.999Z`);
+      if (Number.isNaN(to.getTime())) {
+        return { error: "dateTo must be a valid date (YYYY-MM-DD)." };
+      }
+      createdAt.$lte = to.toISOString();
+    }
+
+    if (createdAt.$gte && createdAt.$lte && createdAt.$gte > createdAt.$lte) {
+      return { error: "dateFrom must be before or equal to dateTo." };
+    }
+
+    filter.createdAt = createdAt;
+  }
+
+  return { filter };
 }
 
 // Controller functions for handling booking-related requests
@@ -121,7 +160,20 @@ export async function getAllBookings(req, res) {
     }
 
     const limit = requestedLimit;
-    const filter = buildBookingFilter(req);
+    const filterResults = buildBookingFilter(req);
+
+    if (filterResults.error) {
+      return res.status(400).json({
+        errors: [
+          {
+            field: "filter",
+            message: filterResults.error,
+          },
+        ],
+      });
+    }
+
+    const { filter } = filterResults;
 
     const { bookings, totalItems } = await getBookingsPage({
       filter,
@@ -139,6 +191,12 @@ export async function getAllBookings(req, res) {
       });
     }
 
+    const filters = {};
+
+    if (filter.ticketClass) filters.ticketClass = filter.ticketClass;
+    if (req.query.dateFrom) filters.dateFrom = String(req.query.dateFrom);
+    if (req.query.dateTo) filters.dateTo = String(req.query.dateTo);
+
     return res.status(200).json({
       data: bookings,
       pagination: {
@@ -148,9 +206,8 @@ export async function getAllBookings(req, res) {
         totalPages,
         hasNextPage: page * limit < totalItems,
         hasPreviousPage: page > 1,
-        sort: "createdAt",
-        order: "desc",
       },
+      filters,
     });
   } catch (error) {
     console.error("Error fetching bookings:", error);
@@ -214,7 +271,7 @@ export async function getMyBookings(req, res) {
   try {
     const bookings = await findBookingsByUserEmail(req.user.email);
 
-    return res.status(200).json({ bookings });
+    return res.status(200).json({ data: bookings });
   } catch (error) {
     console.error("Error fetching user's bookings:", error);
 
@@ -225,23 +282,15 @@ export async function getMyBookings(req, res) {
 export async function bookingPage(req, res) {
   try {
     const { scheduleId } = req.params;
-    // Change to use Mongoose model instead of the database connection directly
-    // Will need to wait until after Feature Set 1 & 2 are implemented to use the Mongoose model for schedules and trips
-    // const db = getDb();
-    // const schedule = await db
-    //   .collection("schedules")
-    //   .findOne({ id: Number(scheduleId) });
-    const schedule = await getScheduleById(scheduleId); // Assuming getScheduleById is a function that retrieves a schedule by its ID
+    const schedule = await getScheduleById(scheduleId);
     if (!schedule) {
       return res.status(404).json("errors/404", {
         title: "Schedule Not Found",
         error: "The requested schedule does not exist.",
       });
-      // return res.status(404).json({ message: "Schedule not found" });
     }
 
-    // const trip = await db.collection("trips").findOne({ id: schedule.tripId });
-    const trip = await getTripById(schedule.tripId); // Assuming getTripById is a function that retrieves a trip by its ID
+    const trip = await getTripById(schedule.tripId);
     if (!trip) {
       return res.status(404).json("errors/404", {
         title: "Trip Not Found",

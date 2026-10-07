@@ -164,9 +164,272 @@ describe("GET /api/bookings pagination", () => {
     const ids1 = page1.body.data.map((b) => b.id);
     const ids2 = page2.body.data.map((b) => b.id);
 
-    expect(ids1.filter((id) => ids2.includes(id))).toHaveLength(0); // No overlap between pages
+    expect(ids1.filter((id) => ids2.includes(id))).toHaveLength(0);
     expect(page1.body.pagination.hasNextPage).toBe(true);
     expect(page2.body.pagination.hasPreviousPage).toBe(true);
+  });
+});
+
+describe("GET /api/bookings filters", () => {
+  test("filters by ticketClass (case-insensitive)", async () => {
+    await getDb()
+      .collection("bookings")
+      .insertMany([
+        {
+          id: "FILTSTD",
+          createdAt: "2026-09-15T12:00:00.000Z",
+          scheduleId: "1",
+          tripId: "alpine-panorama",
+          ticketClass: "standard",
+          selectedDay: "monday",
+          passengers: [
+            { firstName: "A", lastName: "B", email: "a@ex.com", phone: "1" },
+          ],
+        },
+        {
+          id: "FILTPREM",
+          createdAt: "2026-09-16T12:00:00.000Z",
+          scheduleId: "1",
+          tripId: "alpine-panorama",
+          ticketClass: "premium",
+          selectedDay: "monday",
+          passengers: [
+            { firstName: "C", lastName: "D", email: "c@ex.com", phone: "1" },
+          ],
+        },
+      ]);
+
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent.get(
+      "/api/bookings?ticketClass=PREMIUM&limit=50",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty("filters");
+    expect(response.body.data.every((b) => b.ticketClass === "premium")).toBe(
+      true,
+    );
+    expect(response.body.filters.ticketClass).toBe("premium");
+  });
+
+  test("unknown ticketClass returns empty data with valid pagination", async () => {
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent.get(
+      "/api/bookings?ticketClass=nonexistent&limit=10",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toEqual([]);
+    expect(response.body.pagination.totalItems).toBe(0);
+    expect(response.body.pagination.totalPages).toBe(0);
+  });
+
+  test("filters by dateFrom only", async () => {
+    await getDb()
+      .collection("bookings")
+      .insertMany([
+        {
+          id: "DATEFROM1",
+          createdAt: "2026-09-10T10:00:00.000Z",
+          scheduleId: "1",
+          tripId: "alpine-panorama",
+          ticketClass: "standard",
+          selectedDay: "monday",
+          passengers: [
+            { firstName: "A", lastName: "B", email: "a@ex.com", phone: "1" },
+          ],
+        },
+        {
+          id: "DATEFROM2",
+          createdAt: "2026-09-20T10:00:00.000Z",
+          scheduleId: "1",
+          tripId: "alpine-panorama",
+          ticketClass: "standard",
+          selectedDay: "monday",
+          passengers: [
+            { firstName: "C", lastName: "D", email: "c@ex.com", phone: "1" },
+          ],
+        },
+      ]);
+
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent.get(
+      "/api/bookings?dateFrom=2026-09-15&limit=50",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty("filters");
+    expect(response.body.filters).toHaveProperty("dateFrom");
+    expect(
+      response.body.data.every(
+        (b) => new Date(b.createdAt) >= new Date("2026-09-15T00:00:00.000Z"),
+      ),
+    ).toBe(true);
+    expect(response.body.filters.dateFrom).toBe("2026-09-15");
+  });
+
+  test("filters by dateTo only", async () => {
+    await getDb()
+      .collection("bookings")
+      .insertMany([
+        {
+          id: "DATETO1",
+          createdAt: "2026-09-05T10:00:00.000Z",
+          scheduleId: "1",
+          tripId: "alpine-panorama",
+          ticketClass: "standard",
+          selectedDay: "monday",
+          passengers: [
+            { firstName: "A", lastName: "B", email: "a@ex.com", phone: "1" },
+          ],
+        },
+        {
+          id: "DATETO2",
+          createdAt: "2026-09-25T10:00:00.000Z",
+          scheduleId: "1",
+          tripId: "alpine-panorama",
+          ticketClass: "standard",
+          selectedDay: "monday",
+          passengers: [
+            { firstName: "C", lastName: "D", email: "c@ex.com", phone: "1" },
+          ],
+        },
+      ]);
+
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent.get(
+      "/api/bookings?dateTo=2026-09-15&limit=50",
+    );
+
+    expect(response.status).toBe(200);
+    expect(
+      response.body.data.every(
+        (b) => new Date(b.createdAt) <= new Date("2026-09-15T23:59:59.999Z"),
+      ),
+    ).toBe(true);
+    expect(response.body.filters.dateTo).toBe("2026-09-15");
+  });
+
+  test("filters by date range (inclusive)", async () => {
+    await getDb()
+      .collection("bookings")
+      .insertMany([
+        {
+          id: "RANGE1",
+          createdAt: "2026-09-01T12:00:00.000Z",
+          scheduleId: "1",
+          tripId: "alpine-panorama",
+          ticketClass: "standard",
+          selectedDay: "monday",
+          passengers: [
+            { firstName: "A", lastName: "B", email: "a@ex.com", phone: "1" },
+          ],
+        },
+        {
+          id: "RANGE2",
+          createdAt: "2026-09-15T12:00:00.000Z",
+          scheduleId: "1",
+          tripId: "alpine-panorama",
+          ticketClass: "premium",
+          selectedDay: "monday",
+          passengers: [
+            { firstName: "C", lastName: "D", email: "c@ex.com", phone: "1" },
+          ],
+        },
+        {
+          id: "RANGE3",
+          createdAt: "2026-09-30T12:00:00.000Z",
+          scheduleId: "1",
+          tripId: "alpine-panorama",
+          ticketClass: "first",
+          selectedDay: "monday",
+          passengers: [
+            { firstName: "E", lastName: "F", email: "e@ex.com", phone: "1" },
+          ],
+        },
+      ]);
+
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent.get(
+      "/api/bookings?dateFrom=2026-09-10&dateTo=2026-09-20&limit=50",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty("filters");
+    expect(response.body.filters).toHaveProperty("dateFrom");
+    expect(response.body.filters).toHaveProperty("dateTo");
+    expect(response.body.data).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: "RANGE2" })]),
+    );
+    expect(response.body.data.every((b) => b.id !== "RANGE1")).toBe(true);
+    expect(response.body.data.every((b) => b.id !== "RANGE3")).toBe(true);
+    expect(response.body.filters.dateFrom).toBe("2026-09-10");
+    expect(response.body.filters.dateTo).toBe("2026-09-20");
+  });
+
+  test("rejects inverted date range with 400", async () => {
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent.get(
+      "/api/bookings?dateFrom=2026-09-30&dateTo=2026-09-01",
+    );
+    expect(response.status).toBe(400);
+  });
+
+  test("rejects invalid dateFrom with 400", async () => {
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent.get("/api/bookings?dateFrom=not-a-date");
+    expect(response.status).toBe(400);
+  });
+
+  test("rejects invalid dateTo with 400", async () => {
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent.get("/api/bookings?dateTo=2026-13-40");
+    expect(response.status).toBe(400);
+  });
+
+  test("combines ticketClass and date range filters", async () => {
+    await getDb()
+      .collection("bookings")
+      .insertMany([
+        {
+          id: "COMBO1",
+          createdAt: "2026-09-12T12:00:00.000Z",
+          scheduleId: "1",
+          tripId: "alpine-panorama",
+          ticketClass: "premium",
+          selectedDay: "monday",
+          passengers: [
+            { firstName: "A", lastName: "B", email: "a@ex.com", phone: "1" },
+          ],
+        },
+        {
+          id: "COMBO2",
+          createdAt: "2026-09-12T12:00:00.000Z",
+          scheduleId: "1",
+          tripId: "alpine-panorama",
+          ticketClass: "standard",
+          selectedDay: "monday",
+          passengers: [
+            { firstName: "C", lastName: "D", email: "c@ex.com", phone: "1" },
+          ],
+        },
+      ]);
+
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent.get(
+      "/api/bookings?ticketClass=premium&dateFrom=2026-09-01&dateTo=2026-09-30&limit=50",
+    );
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty("filters");
+    expect(response.body.filters).toHaveProperty("dateFrom");
+    expect(response.body.filters).toHaveProperty("dateTo");
+    expect(response.body.data.every((b) => b.ticketClass === "premium")).toBe(
+      true,
+    );
+    expect(response.body.filters.ticketClass).toBe("premium");
+    expect(response.body.filters.dateFrom).toBe("2026-09-01");
+    expect(response.body.filters.dateTo).toBe("2026-09-30");
   });
 });
 

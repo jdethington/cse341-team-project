@@ -514,9 +514,15 @@ router.get("/api/trips/:id", getTripById);
  * @openapi
  * /api/bookings:
  *   get:
- *     summary: List bookings (paginated, role-scoped)
+ *     summary: List bookings (paginated, filterable, role-scoped)
+ *     description: >
+ *       Returns a page of bookings. Admins see all bookings; non-admins see
+ *       only bookings where they are a passenger. Optional filters:
+ *       ticket class and inclusive createdAt date range (YYYY-MM-DD).
  *     tags:
  *       - Bookings
+ *     security:
+ *       - sessionCookie: []
  *     parameters:
  *       - in: query
  *         name: page
@@ -524,6 +530,7 @@ router.get("/api/trips/:id", getTripById);
  *           type: integer
  *           default: 1
  *           minimum: 1
+ *         description: Page number (1-based)
  *       - in: query
  *         name: limit
  *         schema:
@@ -531,15 +538,83 @@ router.get("/api/trips/:id", getTripById);
  *           default: 10
  *           minimum: 1
  *           maximum: 50
+ *         description: Page size (max 50)
+ *       - in: query
+ *         name: ticketClass
+ *         schema:
+ *           type: string
+ *           enum: [standard, premium, first]
+ *         description: >
+ *           Filter by ticket class (case-insensitive). Unknown values return
+ *           an empty page with valid pagination.
+ *       - in: query
+ *         name: dateFrom
+ *         schema:
+ *           type: string
+ *           format: date
+ *           example: "2026-09-01"
+ *         description: >
+ *           Inclusive start of createdAt range (YYYY-MM-DD). Invalid dates
+ *           return 400.
+ *       - in: query
+ *         name: dateTo
+ *         schema:
+ *           type: string
+ *           format: date
+ *           example: "2026-09-30"
+ *         description: >
+ *           Inclusive end of createdAt range (YYYY-MM-DD). Invalid dates
+ *           return 400. If both bounds are present and dateFrom > dateTo,
+ *           returns 400.
  *     responses:
  *       200:
- *         description: Paginated bookings
+ *         description: Paginated bookings (optionally filtered)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Booking'
+ *                 pagination:
+ *                   type: object
+ *                   properties:
+ *                     page:
+ *                       type: integer
+ *                     limit:
+ *                       type: integer
+ *                     totalItems:
+ *                       type: integer
+ *                     totalPages:
+ *                       type: integer
+ *                     hasNextPage:
+ *                       type: boolean
+ *                     hasPreviousPage:
+ *                       type: boolean
+ *                   filters:
+ *                     type: object
+ *                     description: Echo of applied filters (omitted keys were not supplied)
+ *                     properties:
+ *                       ticketClass:
+ *                         type: string
+ *                         example: premium
+ *                       dateFrom:
+ *                         type: string
+ *                         example: "2026-09-01"
+ *                       dateTo:
+ *                         type: string
+ *                         example: "2026-09-30"
  *       400:
- *         description: Invalid pagination parameters
+ *         description: Invalid pagination or filter parameters
  *       401:
  *         description: Authentication required
+ *       404:
+ *         description: Requested page does not exist
  */
 router.get("/api/bookings", requireApiLogin, getAllBookings);
+
 /**
  * @openapi
  * /api/bookings/me:

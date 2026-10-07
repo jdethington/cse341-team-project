@@ -871,11 +871,6 @@ article.booking-page {
   color: var(--clr-text-secondary, #64748b);
 }
 
-/* Edit mode: same card shell; label left, input right */
-.booking-edit-form.booking-card {
-  /* inherits .booking-card padding, border, radius */
-}
-
 .booking-edit-form .booking-details {
   display: flex;
   flex-direction: column;
@@ -954,4 +949,43 @@ article.booking-page {
 
 .booking-edit-form .booking-actions button[type="submit"]:hover {
   filter: brightness(1.08);
+}
+
+.bookings-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1.25rem;
+  padding: 1rem;
+  border: 1px solid var(--clr-border, #e2e8f0);
+  border-radius: 0.5rem;
+  background: var(--clr-surface-alt, #f8fafc);
+}
+
+.bookings-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--clr-text-secondary, #64748b);
+}
+
+.bookings-filters select,
+.bookings-filters input[type="date"] {
+  padding: 0.4rem 0.6rem;
+  font: inherit;
+  font-weight: 500;
+  border: 1px solid var(--clr-border, #cbd5e1);
+  border-radius: 0.4rem;
+  background: #fff;
+}
+
+.bookings-filters button {
+  padding: 0.45rem 0.9rem;
+  font: inherit;
+  font-weight: 600;
+  border-radius: 0.4rem;
+  cursor: pointer;
 }
