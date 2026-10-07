@@ -18,6 +18,25 @@ describe("Bookings API read tests", () => {
   });
   // 2**********************************************************************
   test("GET /api/bookings returns data for an admin", async () => {
+    await getDb()
+      .collection("bookings")
+      .insertOne({
+        id: "JRTESTBOOK1",
+        createdAt: new Date().toISOString(),
+        scheduleId: "1",
+        tripId: "alpine-panorama",
+        ticketClass: "standard",
+        selectedDay: "monday",
+        passengers: [
+          {
+            firstName: "Test",
+            lastName: "User",
+            email: "test@example.com",
+            phone: "555-0100",
+          },
+        ],
+      });
+
     const agent = await loginAs("admin", "password1#");
     const response = await agent.get("/api/bookings");
 
@@ -25,6 +44,15 @@ describe("Bookings API read tests", () => {
     expect(response.headers["content-type"]).toContain("application/json");
     expect(response.body).toHaveProperty("data");
     expect(response.body.data).toBeInstanceOf(Array);
+    expect(response.status).toBe(200);
+    expect(response.body.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "JRTESTBOOK1",
+          ticketClass: "standard",
+        }),
+      ]),
+    );
   });
   // 3**********************************************************************
   test("GET /api/bookings limits a customer to their own bookings", async () => {
@@ -710,6 +738,7 @@ describe("Bookings API pagination and filtering tests", () => {
     expect(response.body.filters.dateFrom).toBe("2026-09-01");
     expect(response.body.filters.dateTo).toBe("2026-09-30");
   });
+  // 17*********************************************************************
   test("customer only sees their own bookings when filters are applied", async () => {
     await getDb()
       .collection("bookings")
@@ -767,56 +796,6 @@ describe("Bookings API pagination and filtering tests", () => {
 });
 // END======================================================================
 //
-describe("GET /api/bookings", () => {
-  test("returns 401 when not authenticated", async () => {
-    const response = await request(app).get("/api/bookings");
-    expect(response.status).toBe(401);
-  });
-
-  test("returns a successful JSON response for an admin", async () => {
-    const agent = await loginAs("admin", "password1#");
-    const response = await agent.get("/api/bookings");
-
-    expect(response.status).toBe(200);
-    expect(response.headers["content-type"]).toContain("application/json");
-    expect(response.body).toHaveProperty("data");
-    expect(response.body.data).toBeInstanceOf(Array);
-  });
-
-  test("returns a booking added to the test database for an admin", async () => {
-    await getDb()
-      .collection("bookings")
-      .insertOne({
-        id: "JRTESTBOOK1",
-        createdAt: new Date().toISOString(),
-        scheduleId: "1",
-        tripId: "alpine-panorama",
-        ticketClass: "standard",
-        selectedDay: "monday",
-        passengers: [
-          {
-            firstName: "Test",
-            lastName: "User",
-            email: "test@example.com",
-            phone: "555-0100",
-          },
-        ],
-      });
-
-    const agent = await loginAs("admin", "password1#");
-    const response = await agent.get("/api/bookings");
-
-    expect(response.status).toBe(200);
-    expect(response.body.data).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          id: "JRTESTBOOK1",
-          ticketClass: "standard",
-        }),
-      ]),
-    );
-  });
-});
 
 describe("Bookings admin page", () => {
   test("redirects to login when not authenticated", async () => {
