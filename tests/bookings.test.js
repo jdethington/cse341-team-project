@@ -9,6 +9,130 @@ async function loginAs(identifier, password) {
   return agent;
 }
 
+describe("Bookings API read tests", () => {
+  // 1**********************************************************************
+  test("GET /api/bookings returns 401 when not authenticated", async () => {
+    const response = await request(app).get("/api/bookings");
+    expect(response.status).toBe(401);
+  });
+  // 2**********************************************************************
+  test("GET /api/bookings returns data for an admin", async () => {
+    const agent = await loginAs("admin", "password1#");
+    const response = await agent.get("/api/bookings");
+
+    expect(response.status).toBe(200);
+    expect(response.headers["content-type"]).toContain("application/json");
+    expect(response.body).toHaveProperty("data");
+    expect(response.body.data).toBeInstanceOf(Array);
+  });
+  // 3**********************************************************************
+  test("GET /api/bookings limits a customer to their own bookings", async () => {
+    await getDb()
+      .collection("bookings")
+      .insertMany([
+        {
+          id: "READ-MINE",
+          createdAt: new Date().toISOString(),
+          scheduleId: "1",
+          tripId: "alpine-panorama",
+          ticketClass: "standard",
+          selectedDay: "monday",
+          passengers: [
+            {
+              firstName: "Cust",
+              lastName: "Omer",
+              email: "customer@example.com",
+              phone: "555-0100",
+            },
+          ],
+        },
+        {
+          id: "READ-OTHER",
+          createdAt: new Date().toISOString(),
+          scheduleId: "1",
+          tripId: "alpine-panorama",
+          ticketClass: "premium",
+          selectedDay: "monday",
+          passengers: [
+            {
+              firstName: "Other",
+              lastName: "Person",
+              email: "someone-else@example.com",
+              phone: "555-0200",
+            },
+          ],
+        },
+      ]);
+
+    const agent = await loginAs("customer", "customer1#");
+    const response = await agent.get("/api/bookings?limit=50");
+
+    expect(response.status).toBe(200);
+    expect(response.body.data).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: "READ-MINE",
+        }),
+      ]),
+    );
+    expect(response.body.data.every((b) => b.id !== "READ-OTHER")).toBe(true);
+  });
+  // 4**********************************************************************
+  test("GET /api/bookings/me returns 401 when not authenticated", async () => {
+    const response = await request(app).get("/api/bookings/me");
+    expect(response.status).toBe(401);
+  });
+  // 5**********************************************************************
+  test("GET /api/bookings/me returns the signed-in customer's bookings", async () => {
+    await getDb()
+      .collection("bookings")
+      .insertMany([
+        {
+          id: "ME-MINE",
+          createdAt: new Date().toISOString(),
+          scheduleId: "1",
+          tripId: "alpine-panorama",
+          ticketClass: "standard",
+          selectedDay: "monday",
+          passengers: [
+            {
+              firstName: "Cust",
+              lastName: "Omer",
+              email: "customer@example.com",
+              phone: "555-0100",
+            },
+          ],
+        },
+        {
+          id: "ME-OTHER",
+          createdAt: new Date().toISOString(),
+          scheduleId: "1",
+          tripId: "alpine-panorama",
+          ticketClass: "premium",
+          selectedDay: "tuesday",
+          passengers: [
+            {
+              firstName: "Other",
+              lastName: "Person",
+              email: "other@example.com",
+              phone: "555-0200",
+            },
+          ],
+        },
+      ]);
+
+    const agent = await loginAs("customer", "customer1#");
+    const response = await agent.get("/api/bookings/me");
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty("data");
+    expect(response.body.data).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: "ME-MINE" })]),
+    );
+    expect(response.body.data.every((b) => b.id !== "ME-OTHER")).toBe(true);
+  });
+});
+// END********************************************************************
 describe("GET /api/bookings", () => {
   test("returns 401 when not authenticated", async () => {
     const response = await request(app).get("/api/bookings");
