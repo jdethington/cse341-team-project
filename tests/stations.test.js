@@ -49,6 +49,10 @@ describe("GET /api/stations", () => {
         expect.objectContaining({
           id: "test-station",
           name: "Test Station",
+          prefecture: "Test Prefecture",
+          region: "central",
+          facilities: ["restroom"],
+          description: "A station created by the test suite.",
         }),
       ]),
     );
