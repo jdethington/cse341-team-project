@@ -470,6 +470,79 @@
         }
       }
     },
+    "/api/trips/{id}/stations": {
+      "get": {
+        "summary": "Get the stations connected to a trip",
+        "description": "Returns the start and end station objects for the given trip. The trip's startStation and endStation references are resolved to their full station records.\n",
+        "tags": [
+          "Trips"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "description": "The trip id, such as alpine-panorama",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The trip's start and end stations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tripId": {
+                      "type": "string"
+                    },
+                    "stations": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Station"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Trip not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unable to retrieve the trip's stations",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/bookings": {
       "get": {
         "summary": "List bookings (paginated, filterable, role-scoped)",
@@ -573,27 +646,22 @@
                         "hasPreviousPage": {
                           "type": "boolean"
                         }
-                      }
-                    },
-                    "meta": {
-                      "type": "object",
-                      "properties": {
-                        "filters": {
-                          "type": "object",
-                          "description": "Echo of applied filters (omitted keys were not supplied)",
-                          "properties": {
-                            "ticketClass": {
-                              "type": "string",
-                              "example": "premium"
-                            },
-                            "dateFrom": {
-                              "type": "string",
-                              "example": "2026-09-01"
-                            },
-                            "dateTo": {
-                              "type": "string",
-                              "example": "2026-09-30"
-                            }
+                      },
+                      "filters": {
+                        "type": "object",
+                        "description": "Echo of applied filters (omitted keys were not supplied)",
+                        "properties": {
+                          "ticketClass": {
+                            "type": "string",
+                            "example": "premium"
+                          },
+                          "dateFrom": {
+                            "type": "string",
+                            "example": "2026-09-01"
+                          },
+                          "dateTo": {
+                            "type": "string",
+                            "example": "2026-09-30"
                           }
                         }
                       }

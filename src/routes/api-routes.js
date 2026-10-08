@@ -3,7 +3,11 @@ import {
   getAllTicketClasses,
   getTicketClassesForDay,
 } from "../controllers/ticket-classes.js";
-import { getAllStations, getStationById } from "../controllers/stations.js";
+import {
+  getAllStations,
+  getStationById,
+  getStationsForTrip,
+} from "../controllers/stations.js";
 import { getAllTrips, getTripById } from "../controllers/trips.js";
 import {
   getAllBookings,
@@ -508,6 +512,59 @@ router.get("/api/trips", getAllTrips);
  *                   type: string
  */
 router.get("/api/trips/:id", getTripById);
+
+/**
+ * @openapi
+ * /api/trips/{id}/stations:
+ *   get:
+ *     summary: Get the stations connected to a trip
+ *     description: >
+ *       Returns the start and end station objects for the given trip. The
+ *       trip's startStation and endStation references are resolved to their
+ *       full station records.
+ *     tags:
+ *       - Trips
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         description: The trip id, such as alpine-panorama
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: The trip's start and end stations
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 tripId:
+ *                   type: string
+ *                 stations:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Station'
+ *       404:
+ *         description: Trip not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       500:
+ *         description: Unable to retrieve the trip's stations
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+router.get("/api/trips/:id/stations", getStationsForTrip);
 
 // /api/bookings
 /**
