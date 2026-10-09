@@ -29,7 +29,10 @@ export async function getAllUsers() {
 
 // Finds a single user by their ID, including their role.
 export async function getUserById(id) {
-    return User.findById(id).populate("role").lean();
+    return User.findById(id)
+        .select("-passwordHash") // Exclude the passwordHash field from the result
+        .populate("role")
+        .lean();
 }
 
 export const getPaginatedUsers = async ({ filter = {}, page, limit, sort, order }) => {
@@ -37,7 +40,13 @@ export const getPaginatedUsers = async ({ filter = {}, page, limit, sort, order 
     const sortOptions = { [sort]: order };
 
     const [users, totalItems] = await Promise.all([
-        User.find(filter).populate("role").sort(sortOptions).skip(skip).limit(limit).lean(),
+        User.find(filter)
+            .select("-passwordHash")
+            .populate("role")
+            .sort(sortOptions)
+            .skip(skip)
+            .limit(limit)
+            .lean(),
         User.countDocuments(filter)
     ]);
 
