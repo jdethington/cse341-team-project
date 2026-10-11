@@ -18,6 +18,7 @@ import {
 import {
   getAllSchedules,
   getSchedulesForTrip,
+  getScheduleById,
 } from "../controllers/schedules.js";
 import { requireApiLogin } from "../middleware/auth.js";
 import { getUsers, updateUserById, deleteUser } from "../controllers/users.js";
@@ -792,6 +793,50 @@ router.delete("/api/bookings/:id", requireApiLogin, deleteBooking);
  *         description: Failed to fetch schedules
  */
 router.get("/api/schedules", getAllSchedules);
+
+
+
+/**
+ * @openapi
+ * /api/schedules/{id}:
+ *   get:
+ *     summary: Get one schedule by id
+ *     tags:
+ *       - Schedules
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The schedule id (e.g., "1")
+ *     responses:
+ *       200:
+ *         description: The matching schedule
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Schedule'
+ *       404:
+ *         description: Schedule not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       500:
+ *         description: Failed to fetch schedule
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ */
+router.get("/api/schedules/:id", getScheduleById);
 
 /**
  * @openapi
