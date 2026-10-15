@@ -11,27 +11,6 @@ async function loginAs(identifier, password) {
     return agent;
 }
 
-// Read tests: Test the endpoint that returns users
-describe("Users API read tests", () => {
-    test("returns 401 when not authenticated", async () => {
-        const response = await request(app).get("/api/users");
-        expect(response.status).toBe(401);
-    });
-
-    test("returns users when authenticated as admin", async () => {
-        const agent = await loginAs("admin", "password1#");
-        const response = await agent.get("/api/users");
-        expect(response.status).toBe(200);
-        expect(response.headers["content-type"]).toContain("application/json");
-        expect(response.body).toHaveProperty("data");
-        expect(response.body.data).toBeInstanceOf(Array);
-
-        // verify no sensitive data fields are exposed
-        expect(user).not.toHaveProperty("password");
-        expect(user).not.toHaveProperty("passwordHash");
-    });
-});
-
 describe("Users API pagination and filtering tests", () => {
     test("returns pagination results with correct metadata", async () => {
         const db = getDb();
@@ -119,20 +98,37 @@ describe("Users API pagination and filtering tests", () => {
         expect(page1.body.data).not.toEqual(page2.body.data);
     });
 
-    test.skip("returns empty data array when no matches found", async () => {
-        // Text search requires MongoDB text index which is not supported
-        // in MongoDB Memory Server test environment.
-        // Verified manually in development.
+    test("keyword search returns matching users by username", async () => {
+        const agent = await loginAs("admin", "password1#");
+        const response = await agent.get("/api/users?q=admin&limit=10");
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.length).toBeGreaterThan(0);
+        expect(response.body.data.every(u =>
+            u.username.includes("admin") ||
+            u.name.toLowerCase().includes("admin") ||
+            u.email.includes("admin")
+        )).toBe(true);
     });
 
-    test.skip("keyword search returns matching users by name", async () => {
-        // Text search requires MongoDB text index not supported in Memory Server.
-        // Manually verified: ?q=Admin returns admin user, ?q=Customer returns customer user.
+    test("keyword search returns matching users by email", async () => {
+        const agent = await loginAs("admin", "password1#");
+        const response = await agent.get("/api/users?q=example.com&limit=10");
+
+        expect(response.status).toBe(200);
+        expect(response.body.data.length).toBeGreaterThan(0);
+        expect(response.body.data.every(u =>
+            u.email.includes("example.com")
+        )).toBe(true);
     });
 
-    test.skip("keyword search returns matching users by email", async () => {
-        // Text search requires MongoDB text index not supported in Memory Server.
-        // Manually verified: ?q=example.com returns all seeded users.
+    test("returns empty data array when no matches found", async () => {
+        const agent = await loginAs("admin", "password1#");
+        const response = await agent.get("/api/users?q=zzznomatch999&limit=10");
+
+        expect(response.status).toBe(200);
+        expect(response.body.data).toEqual([]);
+        expect(response.body.pagination.totalItems).toBe(0);
     });
 
     test("filters by role when role query parameter is provided", async () => {

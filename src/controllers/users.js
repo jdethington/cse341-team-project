@@ -175,7 +175,11 @@ export async function getUsers(req, res, next) {
         }
 
         if (searchText) {
-            filter.$text = { $search: searchText };
+            filter.$or = [
+                { name: { $regex: searchText, $options: 'i' } },
+                { username: { $regex: searchText, $options: 'i' } },
+                { email: { $regex: searchText, $options: 'i' } }
+            ];
         }
 
         const { users, totalItems } = await getPaginatedUsers({
